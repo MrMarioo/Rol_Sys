@@ -1,0 +1,161 @@
+version: "3.3"
+
+services:
+    web:
+        container_name: ${CONTAINER_NAME}
+        restart: always
+        build:
+            dockerfile: .docker/web/Dockerfile
+            context: ..
+            args:
+                - USERNAME=${USERNAME:-ubuntu}
+                - UID=${UID:-1000}
+                - GROUP=${GROUP:-root}
+                - ROOTPASS=${ROOTPASS:-l3tm31n}
+                - INSTALL_NODE=${INSTALL_NODE-true}
+                - INSTALL_COMPOSER=${INSTALL_COMPOSER-true}
+        expose:
+            - "${WEB_PORT:-80}"
+            - "${VITE_PORT:-5173}"
+        volumes:
+            - ../:/app
+            - ./web/Caddyfile:/etc/caddy/Caddyfile
+        extra_hosts:
+            - host.docker.internal:host-gateway
+        links:
+            - db
+            - redis
+            - mailpit
+            - minio
+        labels:
+            - "traefik.enable=true"
+            - "traefik.http.routers.${CONTAINER_NAME}.entrypoints=${ENTRYPOINT}"
+            - "traefik.http.routers.${CONTAINER_NAME}.rule=Host(`${DOMAIN}`, `app.${DOMAIN}`, `www.${DOMAIN}`)"
+            - "traefik.http.routers.${CONTAINER_NAME}.service=${CONTAINER_NAME}"
+            - "traefik.http.services.${CONTAINER_NAME}.loadbalancer.server.port=${WEB_PORT:-80}"
+            - "traefik.http.routers.${CONTAINER_NAME}.tls=${TLS:-false}"
+            - "traefik.http.routers.${CONTAINER_NAME}.tls.certresolver=${CERT_RESOLVER:-letsencrypt}"
+            - "traefik.http.routers.${CONTAINER_NAME}-vite.entrypoints=${ENTRYPOINT_VITE}"
+            - "traefik.http.routers.${CONTAINER_NAME}-vite.rule=Host(`${DOMAIN}`, `app.${DOMAIN}`)"
+            - "traefik.http.routers.${CONTAINER_NAME}-vite.service=${CONTAINER_NAME}-vite"
+            - "traefik.http.services.${CONTAINER_NAME}-vite.loadbalancer.server.port=${VITE_PORT:-5173}"
+            - "traefik.http.routers.${CONTAINER_NAME}-vite.tls=${TLS:-false}"
+            - "traefik.http.routers.${CONTAINER_NAME}-vite.tls.certresolver=${CERT_RESOLVER:-letsencrypt}"
+        networks:
+            - proxy
+        tty: true
+
+    db:
+        container_name: "${CONTAINER_NAME}-db"
+        image: mysql:8.3
+        command: --default-authentication-plugin=mysql_native_password --secure-file-priv=''
+        restart: always
+        environment:
+            MYSQL_DATABASE: laravel
+            MYSQL_ROOT_PASSWORD: "${MYSQL_PASSWORD:-l3tm31n}"
+        expose:
+            - "${MYSQL_PORT:-3306}"
+        ports:
+            - "${MYSQL_EXTERNAL_PORT:-33060}:3306"
+        volumes:
+            - ./docker_volumes/db:/var/lib/mysql
+            - ./main-db/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
+        labels:
+            - "traefik.enable=true"
+            - "traefik.http.routers.${CONTAINER_NAME}-db.entrypoints=${ENTRYPOINT_DB}"
+            - "traefik.http.routers.${CONTAINER_NAME}-db.rule=Host(`db.${DOMAIN}`)"
+            - "traefik.http.routers.${CONTAINER_NAME}-db.service=${CONTAINER_NAME}-db"
+            - "traefik.http.services.${CONTAINER_NAME}-db.loadbalancer.server.port=${MYSQL_PORT:-3306}"
+            - "traefik.http.routers.${CONTAINER_NAME}-db.tls=${DB_TLS:-false}"
+            - "traefik.http.routers.${CONTAINER_NAME}-db.tls.certresolver=${CERT_RESOLVER:-letsencrypt}"
+        networks:
+            - proxy
+
+    phpmyadmin:
+        container_name: "${CONTAINER_NAME}-pma"
+        image: phpmyadmin/phpmyadmin:latest
+        expose:
+            - "${PHPMYADMIN_PORT:-80}"
+        depends_on:
+            - db
+        links:
+            - db
+        environment:
+            UPLOAD_LIMIT: 750M
+        labels:
+            - "traefik.enable=true"
+            - "traefik.http.routers.${CONTAINER_NAME}-pma.entrypoints=${ENTRYPOINT}"
+            - "traefik.http.routers.${CONTAINER_NAME}-pma.rule=Host(`pma.${DOMAIN}`)"
+            - "traefik.http.routers.${CONTAINER_NAME}-pma.service=${CONTAINER_NAME}-pma"
+            - "traefik.http.services.${CONTAINER_NAME}-pma.loadbalancer.server.port=${PHPMYADMIN_PORT:-80}"
+            - "traefik.http.routers.${CONTAINER_NAME}-pma.tls=${TLS:-false}"
+            - "traefik.http.routers.${CONTAINER_NAME}-pma.tls.certresolver=${CERT_RESOLVER:-letsencrypt}"
+        networks:
+            - proxy
+
+    redis:
+        image: "redis:alpine"
+        container_name: "${CONTAINER_NAME}-redis"
+        expose:
+            - "${REDIS_PORT:-6379}"
+        labels:
+            - "traefik.enable=true"
+            - "traefik.http.routers.${CONTAINER_NAME}-redis.rule=Host(`redis.${DOMAIN}`)"
+            - "traefik.http.routers.${CONTAINER_NAME}-redis.entrypoints=${ENTRYPOINT}"
+        networks:
+            - proxy
+
+    mailpit:
+        image: "axllent/mailpit:latest"
+        container_name: "${CONTAINER_NAME}-mailpit"
+        environment:
+            MP_UI_BIND_ADDR: "0.0.0.0:${MAILPIT_PORT:-80}"
+        expose:
+            - "${MAILPIT_PORT:-80}"
+        labels:
+            - "traefik.enable=true"
+            - "traefik.http.routers.${CONTAINER_NAME}-mailpit.entrypoints=${ENTRYPOINT}"
+            - "traefik.http.routers.${CONTAINER_NAME}-mailpit.rule=Host(`mailpit.${DOMAIN}`)"
+            - "traefik.http.routers.${CONTAINER_NAME}-mailpit.service=${CONTAINER_NAME}-mailpit"
+            - "traefik.http.services.${CONTAINER_NAME}-mailpit.loadbalancer.server.port=${MAILPIT_PORT:-80}"
+            - "traefik.http.routers.${CONTAINER_NAME}-mailpit.tls=${TLS:-false}"
+            - "traefik.http.routers.${CONTAINER_NAME}-mailpit.tls.certresolver=${CERT_RESOLVER:-letsencrypt}"
+        networks:
+            - proxy
+
+    minio:
+        image: "minio/minio:RELEASE.2023-03-20T20-16-18Z"
+        container_name: "${CONTAINER_NAME}-minio"
+        restart: always
+        ports:
+            - "${MINIO_PORT_EXTERNAL:-9100}:9000"
+        expose:
+            - "${MINIO_PORT:-9000}"
+            - "${MINIO_UI_PORT:-80}"
+        volumes:
+            - ./docker_volumes/minio:/minio
+        command: "server --address :${MINIO_PORT:-9000} --console-address :${MINIO_UI_PORT:-80} /minio"
+        labels:
+            - "traefik.enable=true"
+            - "traefik.http.routers.${CONTAINER_NAME}-minio.entrypoints=${ENTRYPOINT}"
+            - "traefik.http.routers.${CONTAINER_NAME}-minio.rule=Host(`cdn.${DOMAIN}`)"
+            - "traefik.http.services.${CONTAINER_NAME}-minio.loadbalancer.server.port=${MINIO_PORT:-9000}"
+            - "traefik.http.routers.${CONTAINER_NAME}-minio.service=${CONTAINER_NAME}-minio"
+            - "traefik.http.routers.${CONTAINER_NAME}-minio.tls=${TLS:-false}"
+            - "traefik.http.routers.${CONTAINER_NAME}-minio.tls.certresolver=${CERT_RESOLVER:-letsencrypt}"
+            - "traefik.http.routers.${CONTAINER_NAME}-minio-ui.entrypoints=${ENTRYPOINT}"
+            - "traefik.http.routers.${CONTAINER_NAME}-minio-ui.rule=Host(`minio.${DOMAIN}`)"
+            - "traefik.http.services.${CONTAINER_NAME}-minio-ui.loadbalancer.server.port=${MINIO_UI_PORT:-80}"
+            - "traefik.http.routers.${CONTAINER_NAME}-minio-ui.service=${CONTAINER_NAME}-minio-ui"
+            - "traefik.http.routers.${CONTAINER_NAME}-minio-ui.tls=${TLS:-false}"
+            - "traefik.http.routers.${CONTAINER_NAME}-minio-ui.tls.certresolver=${CERT_RESOLVER:-letsencrypt}"
+        environment:
+            MINIO_ROOT_USER: "${MINIO_USER:-minio}"
+            MINIO_ROOT_PASSWORD: "${MINIO_PASSWORD:-1Zx2df3ty!}"
+            MINIO_BROWSER_REDIRECT_URL: "http://minio.${DOMAIN}"
+        networks:
+            - proxy
+
+networks:
+    proxy:
+        external: true
