@@ -6,7 +6,7 @@ use Inertia\Inertia;
 
 Route::get('/', [\App\Http\Controllers\HomeController::class, 'index'])->name('home');
 
-Route::get('/login', function () {
+Route::get('login', function () {
     return Inertia::render('Auth/Login');
-});
+})->name("login");
 

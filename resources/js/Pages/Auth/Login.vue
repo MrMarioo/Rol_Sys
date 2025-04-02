@@ -7,6 +7,7 @@ import InputError from '@/Components/InputError.vue';
 import InputLabel from '@/Components/InputLabel.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import TextInput from '@/Components/TextInput.vue';
+import MicrosoftIcon from "@/Components/Icons/MicrosoftIcon.vue";
 
 defineProps({
     canResetPassword: Boolean,
@@ -80,11 +81,23 @@ const submit = () => {
                 <Link v-if="canResetPassword" :href="route('password.request')" class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                     Forgot your password?
                 </Link>
-
-                <PrimaryButton class="ms-4" :class="{ 'opacity-25': form.processing }" :disabled="form.processing">
-                    Log in
-                </PrimaryButton>
+            </div>
+            <div class="flex flex-col space-y-4">
+                <PrimaryButton @click="submit" class="w-full justify-center bg-blue-500 hover:bg-blue-600">Sign in</PrimaryButton>
             </div>
         </form>
+        <div
+            class="flex items-center py-3 text-xs uppercase text-gray-400 before:me-6 before:flex-1 before:border-t before:border-gray-200 after:ms-6 after:flex-1 after:border-t after:border-gray-200"
+        >
+            Or
+        </div>
+        <a
+
+            class="flex w-full items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 transition duration-150 ease-in-out hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+        >
+            <MicrosoftIcon />
+            <span class="text-base text-sm font-semibold text-gray-700">Sign in with Microsoft</span>
+        </a>
+
     </AuthenticationCard>
 </template>
