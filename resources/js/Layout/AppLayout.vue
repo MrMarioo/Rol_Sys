@@ -9,10 +9,7 @@
                     <div class="container-lg wide-xl">
                         <div class="nk-header-wrap">
                             <div class="nk-header-brand">
-                                <a href="/" class="logo-link">
-                                    <img class="logo-light logo-img" style="width: 160px" src="/assets/img/ap-logo-new.svg" alt="logo" />
-                                    <img class="logo-dark logo-img" style="width: 160px" src="/assets/img/ap-logo-new.svg" alt="logo-dark" />
-                                </a>
+                                <Logo />
                             </div>
                             <!-- .nk-header-brand -->
                             <div class="nk-header-tools">
@@ -374,7 +371,7 @@ import { ref } from 'vue';
 import { onMounted } from 'vue';
 import axios from 'axios';
 import Swal from 'sweetalert2';
-
+import Logo from "@/Components/Logo.vue";
 export default {
     props: {
         title: String,
