@@ -20,6 +20,7 @@
         "inertiajs/inertia-laravel": "^2.0",
         "lab404/laravel-impersonate": "^1.7",
         "laravel/framework": "^11.0",
+        "laravel/jetstream": "^5.3",
         "laravel/sanctum": "^4.0",
         "laravel/socialite": "^5.16",
         "laravel/tinker": "^2.8",
@@ -39,7 +40,7 @@
         "spatie/simple-excel": "^3.3",
         "symfony/http-client": "^6.2",
         "symfony/mailgun-mailer": "^6.3",
-        "tightenco/ziggy": "^1.0",
+        "tightenco/ziggy": "^2.0",
         "webfox/laravel-xero-oauth2": "^4.2",
         "xeroapi/xero-php-oauth2": "^3.0"
     },
