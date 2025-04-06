@@ -35,7 +35,7 @@ const submit = () => {
 
     <AuthenticationCard>
         <template #logo>
-            <AuthenticationCardLogo :styles='size-64' />
+            <AuthenticationCardLogo :styles="'size-64'" />
         </template>
 
         <div v-if="status" class="mb-4 font-medium text-sm text-green-600">
@@ -83,7 +83,7 @@ const submit = () => {
                 </Link>
             </div>
             <div class="flex flex-col space-y-4">
-                <PrimaryButton @click="submit" class="w-full justify-center bg-blue-500 hover:bg-blue-600">Sign in</PrimaryButton>
+                <PrimaryButton class="w-full justify-center bg-blue-500 hover:bg-blue-600">Sign in</PrimaryButton>
             </div>
         </form>
     </AuthenticationCard>
