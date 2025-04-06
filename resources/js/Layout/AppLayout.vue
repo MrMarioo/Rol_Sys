@@ -10,8 +10,7 @@
                         <div class="nk-header-wrap">
                             <div class="nk-header-brand">
                                 <a href="/" class="logo-link">
-                                    <img class="logo-light logo-img" style="width: 160px" src="/assets/img/ap-logo-new.svg" alt="logo" />
-                                    <img class="logo-dark logo-img" style="width: 160px" src="/assets/img/ap-logo-new.svg" alt="logo-dark" />
+                                    <AuthenticationCardLogo styles="size-16" />
                                 </a>
                             </div>
                             <!-- .nk-header-brand -->
@@ -345,7 +344,7 @@
                                 <div class="nk-footer">
                                     <div class="wide-xl container">
                                         <div class="nk-footer-wrap g-2">
-                                            <div class="nk-footer-copyright">Copyright &copy; 2017-{{ new Date().getFullYear() }} InfoLogic Ltd.</div>
+                                            <div class="nk-footer-copyright">Copyright &copy; 2024-{{ new Date().getFullYear() }} Mariusz Śmistek.</div>
                                             <div class="nk-footer-links">
                                                 <ul class="nav nav-sm"></ul>
                                             </div>
@@ -367,13 +366,12 @@
 </template>
 
 <script>
-import { computed } from 'vue';
 import { Head, Link, usePage } from '@inertiajs/inertia-vue3';
 import appCSS from '../../sass/dashlite/scss/dashlite.scss';
 import { ref } from 'vue';
-import { onMounted } from 'vue';
 import axios from 'axios';
-import Swal from 'sweetalert2';
+import AuthenticationCardLogo from "@/Components/AuthenticationCardLogo.vue";
+import {Dropdown} from "bootstrap";
 
 export default {
     props: {
@@ -383,6 +381,7 @@ export default {
     },
 
     components: {
+        AuthenticationCardLogo,
         Head,
         Link,
     },
@@ -426,31 +425,31 @@ export default {
     },
 
     mounted() {
-        const flash = this.$page.props.flash;
-
-        if (flash.success) {
-            Swal.fire({
-                icon: 'success',
-                title: 'Success',
-                text: flash.success,
-                toast: true,
-                showConfirmButton: false,
-                position: 'top-end',
-                timer: 3000,
-            });
-        }
-
-        if (flash.error) {
-            Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: flash.error,
-                toast: true,
-                showConfirmButton: false,
-                position: 'top-end',
-                timer: 3000,
-            });
-        }
+        // const flash = this.$page.props.flash;
+        //
+        // if (flash.success) {
+        //     Swal.fire({
+        //         icon: 'success',
+        //         title: 'Success',
+        //         text: flash.success,
+        //         toast: true,
+        //         showConfirmButton: false,
+        //         position: 'top-end',
+        //         timer: 3000,
+        //     });
+        // }
+        //
+        // if (flash.error) {
+        //     Swal.fire({
+        //         icon: 'error',
+        //         title: 'Error',
+        //         text: flash.error,
+        //         toast: true,
+        //         showConfirmButton: false,
+        //         position: 'top-end',
+        //         timer: 3000,
+        //     });
+        // }
     },
 };
 </script>
