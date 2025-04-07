@@ -1,289 +1,466 @@
-<script setup>
+<template>
+    <div class="nk-app-root">
+        <Head :title="title" />
+        <!-- main @s -->
+        <div class="nk-main">
+            <!-- wrap @s -->
+            <div class="nk-wrap">
+                <div class="nk-header nk-header-fixed is-light">
+                    <div class="container-lg wide-xl">
+                        <div class="nk-header-wrap">
+                            <div class="nk-header-brand">
+                                <a href="/public" class="logo-link">
+                                    <AuthenticationCardLogo styles="size-16" color="gray" />
+                                </a>
+                            </div>
+                            <!-- .nk-header-brand -->
+                            <div class="nk-header-tools">
+                                <ul class="nk-quick-nav">
+                                    <li class="dropdown user-dropdown">
+                                        <a href="#" class="dropdown-toggle" data-bs-toggle="dropdown">
+                                            <div class="user-toggle">
+                                                <div class="user-avatar sm">
+                                                    <em class="icon ni ni-user-alt"></em>
+                                                </div>
+                                                <div class="user-name dropdown-indicator d-none d-sm-block">{{ user.name }}</div>
+                                            </div>
+                                        </a>
+                                        <div class="dropdown-menu dropdown-menu-md dropdown-menu-end dropdown-menu-s1">
+                                            <div class="dropdown-inner user-card-wrap bg-lighter d-none d-md-block">
+                                                <div class="user-card">
+                                                    <div class="user-avatar">
+                                                        <span>AB</span>
+                                                    </div>
+                                                    <div class="user-info">
+                                                        <span class="lead-text">{{ user.name }}</span>
+                                                        <span class="sub-text">{{ user.email }}</span>
+                                                    </div>
+                                                    <div class="user-action">
+                                                        <a class="btn btn-icon me-n2" href="#"><em class="icon ni ni-setting"></em></a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="dropdown-inner">
+                                                <ul class="link-list">
+<!--                                                    <li>-->
+<!--                                                        <Link href="/user/profile">-->
+<!--                                                            <em class="icon ni ni-user-alt"></em>-->
+<!--                                                            <span>View Profile</span>-->
+<!--                                                        </Link>-->
+<!--                                                    </li>-->
+<!--                                                    <li>-->
+<!--                                                        <Link href="/dashboard/login-activity">-->
+<!--                                                            <em class="icon ni ni-activity-alt"></em>-->
+<!--                                                            <span>Login Activity</span>-->
+<!--                                                        </Link>-->
+<!--                                                    </li>-->
+                                                    <!-- <li><Link href="/dashboard/subscription"><em class="icon ni ni-sign-gbp"></em><span>Pricing</span></Link></li> -->
+                                                    <li>
+                                                        <a class="dark-switch" :class="{ active: theme == 'dark' }" @click="toggleTheme" href="#">
+                                                            <em class="icon ni ni-moon"></em>
+                                                            <span>Dark Mode</span>
+                                                        </a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                            <div class="dropdown-inner">
+                                                <ul class="link-list">
+                                                    <li>
+                                                        <a href="#" @click="logOut">
+                                                            <em class="icon ni ni-signout"></em>
+                                                            <span>Sign out</span>
+                                                        </a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </li>
+                                    <!-- .dropdown -->
+                                    <li class="dropdown notification-dropdown">
+                                        <a href="#" class="dropdown-toggle nk-quick-nav-icon me-lg-n1" data-bs-toggle="dropdown">
+                                            <div class="icon-status icon-status-info"><em class="icon ni ni-bell"></em></div>
+                                        </a>
+                                        <div class="dropdown-menu dropdown-menu-xl dropdown-menu-end dropdown-menu-s1">
+                                            <div class="dropdown-head">
+                                                <span class="sub-title nk-dropdown-title">Notifications</span>
+                                                <a href="#">Mark All as Read</a>
+                                            </div>
+                                            <div class="dropdown-body">
+                                                <div class="nk-notification">
+                                                    <div class="nk-notification-item dropdown-inner">
+                                                        <div class="nk-notification-icon">
+                                                            <em class="icon icon-circle bg-warning-dim ni ni-curve-down-right"></em>
+                                                        </div>
+                                                        <div class="nk-notification-content">
+                                                            <div class="nk-notification-text">
+                                                                You have requested to
+                                                                <span>Widthdrawal</span>
+                                                            </div>
+                                                            <div class="nk-notification-time">2 hrs ago</div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="nk-notification-item dropdown-inner">
+                                                        <div class="nk-notification-icon">
+                                                            <em class="icon icon-circle bg-success-dim ni ni-curve-down-left"></em>
+                                                        </div>
+                                                        <div class="nk-notification-content">
+                                                            <div class="nk-notification-text">
+                                                                Your
+                                                                <span>Deposit Order</span>
+                                                                is placed
+                                                            </div>
+                                                            <div class="nk-notification-time">2 hrs ago</div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="nk-notification-item dropdown-inner">
+                                                        <div class="nk-notification-icon">
+                                                            <em class="icon icon-circle bg-warning-dim ni ni-curve-down-right"></em>
+                                                        </div>
+                                                        <div class="nk-notification-content">
+                                                            <div class="nk-notification-text">
+                                                                You have requested to
+                                                                <span>Widthdrawal</span>
+                                                            </div>
+                                                            <div class="nk-notification-time">2 hrs ago</div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="nk-notification-item dropdown-inner">
+                                                        <div class="nk-notification-icon">
+                                                            <em class="icon icon-circle bg-success-dim ni ni-curve-down-left"></em>
+                                                        </div>
+                                                        <div class="nk-notification-content">
+                                                            <div class="nk-notification-text">
+                                                                Your
+                                                                <span>Deposit Order</span>
+                                                                is placed
+                                                            </div>
+                                                            <div class="nk-notification-time">2 hrs ago</div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="nk-notification-item dropdown-inner">
+                                                        <div class="nk-notification-icon">
+                                                            <em class="icon icon-circle bg-warning-dim ni ni-curve-down-right"></em>
+                                                        </div>
+                                                        <div class="nk-notification-content">
+                                                            <div class="nk-notification-text">
+                                                                You have requested to
+                                                                <span>Widthdrawal</span>
+                                                            </div>
+                                                            <div class="nk-notification-time">2 hrs ago</div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="nk-notification-item dropdown-inner">
+                                                        <div class="nk-notification-icon">
+                                                            <em class="icon icon-circle bg-success-dim ni ni-curve-down-left"></em>
+                                                        </div>
+                                                        <div class="nk-notification-content">
+                                                            <div class="nk-notification-text">
+                                                                Your
+                                                                <span>Deposit Order</span>
+                                                                is placed
+                                                            </div>
+                                                            <div class="nk-notification-time">2 hrs ago</div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <!-- .nk-notification -->
+                                            </div>
+                                            <!-- .nk-dropdown-body -->
+                                            <div class="dropdown-foot justify-center">
+                                                <a href="#">View All</a>
+                                            </div>
+                                        </div>
+                                    </li>
+                                    <!-- .dropdown -->
+                                    <li class="d-lg-none dropdown">
+                                        <a href="#" class="dropdown-toggle nk-quick-nav-icon p-2" data-bs-toggle="dropdown">
+                                            <em class="icon ni ni-menu"></em>
+                                        </a>
+                                        <div class="dropdown-menu dropdown-menu-end dropdown-menu-lg">
+                                            <div class="dropdown-inner">
+                                                <ul class="link-list-plain">
+                                                    <li>
+                                                        <Link href="/" class="dropdown-item d-flex align-items-center">
+                                                            <em class="icon ni ni-dashboard me-2"></em>
+                                                            <span>Dashboard</span>
+                                                        </Link>
+                                                    </li> <li>
+                                                        <Link href="/fields" class="dropdown-item d-flex align-items-center">
+                                                            <em class="icon ni map me-2"></em>
+                                                            <span>Fields</span>
+                                                        </Link>
+                                                    </li> <li>
+                                                        <Link href="/field-data" class="dropdown-item d-flex align-items-center">
+                                                            <em class="icon ni ni-server me-2"></em>
+                                                            <span>Fields Data</span>
+                                                        </Link>
+                                                    </li> <li>
+                                                        <Link href="/analytics" class="dropdown-item d-flex align-items-center">
+                                                            <em class="icon ni growth me-2"></em>
+                                                            <span>Analytics</span>
+                                                        </Link>
+                                                    </li> <li>
+                                                        <Link href="/reports" class="dropdown-item d-flex align-items-center">
+                                                            <em class="icon ni files me-2"></em>
+                                                            <span>Reports</span>
+                                                        </Link>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </li>
+                                </ul>
+                                <!-- .nk-quick-nav -->
+                            </div>
+                            <!-- .nk-header-tools -->
+                        </div>
+                        <!-- .nk-header-wrap -->
+                    </div>
+                    <!-- .container-fliud -->
+                </div>
+                <!-- main header @e -->
+                <!-- content @s -->
+                <div class="nk-content">
+                    <div class="wide-xl container">
+                        <div class="nk-content-inner">
+                            <div class="nk-aside" data-content="sideNav" data-toggle-overlay="true" data-toggle-screen="lg" data-toggle-body="true">
+                                <div class="nk-sidebar-menu" data-simplebar>
+                                    <!-- Menu -->
+                                    <ul class="nk-menu">
+                                        <li class="nk-menu-heading">
+                                            <h6 class="overline-title">Menu</h6>
+                                        </li>
+                                        <li class="nk-menu-item">
+                                            <Link href="/" class="nk-menu-link">
+                                                <span class="nk-menu-icon"><em class="icon ni ni-dashboard"></em></span>
+                                                <span class="nk-menu-text">Dashboard</span>
+                                            </Link>
+                                        </li>
+                                        <li class="nk-menu-item">
+                                            <Link href="/fields" class="nk-menu-link">
+                                                <span class="nk-menu-icon"><em class="icon ni ni-map"></em></span>
+                                                <span class="nk-menu-text">Fields</span>
+                                            </Link>
+                                        </li>
+                                        <li class="nk-menu-item">
+                                            <Link href="/field-data" class="nk-menu-link">
+                                                <span class="nk-menu-icon"><em class="icon ni ni-server"></em></span>
+                                                <span class="nk-menu-text">Fields Data</span>
+                                            </Link>
+                                        </li>
+                                        <li class="nk-menu-item">
+                                            <Link href="/analytics" class="nk-menu-link">
+                                                <span class="nk-menu-icon"><em class="icon ni ni-growth"></em></span>
+                                                <span class="nk-menu-text">Analitycs</span>
+                                            </Link>
+                                        </li>
+                                        <li class="nk-menu-item">
+                                            <Link href="/reports" class="nk-menu-link">
+                                                <span class="nk-menu-icon"><em class="icon ni ni-files"></em></span>
+                                                <span class="nk-menu-text">Reports</span>
+                                            </Link>
+                                        </li>
+                                        <!-- <li class="nk-menu-item">
+                                            <a href="html/subscription/profile-setting.html" class="nk-menu-link">
+                                                <span class="nk-menu-icon"><em class="icon ni ni-account-setting"></em></span>
+                                                <span class="nk-menu-text">Account Setting</span>
+                                            </a>
+                                        </li> -->
+                                    </ul>
+                                    <!-- Menu -->
+                                    <ul class="nk-menu nk-menu-sm" style="display: none">
+                                        <!-- Menu -->
+                                        <li class="nk-menu-heading">
+                                            <span>Help Center</span>
+                                        </li>
+                                        <li class="nk-menu-item">
+                                            <a href="html/subscription/faqs.html" class="nk-menu-link">
+                                                <span class="nk-menu-text">FAQs</span>
+                                            </a>
+                                        </li>
+                                        <li class="nk-menu-item">
+                                            <a href="html/subscription/contact.html" class="nk-menu-link">
+                                                <span class="nk-menu-text">Contact</span>
+                                            </a>
+                                        </li>
+                                        <li class="nk-menu-item">
+                                            <a href="html/subscription/support.html" class="nk-menu-link">
+                                                <span class="nk-menu-text">Support</span>
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
+                                <!-- .nk-sidebar-menu -->
+                                <div class="nk-aside-close">
+                                    <a href="#" class="toggle" data-target="sideNav"><em class="icon ni ni-cross"></em></a>
+                                </div>
+                                <!-- .nk-aside-close -->
+                            </div>
+                            <!-- .nk-aside -->
+                            <div class="nk-content-body">
+                                <div class="nk-content-wrap">
+                                    <!-- <div class="nk-block-head nk-block-head-lg">
+                                        <div class="nk-block-between-md g-4">
+                                            <div class="nk-block-head-content">
+                                                <h2 class="nk-block-title fw-normal">Welcome, {{ user.name }}</h2>
+                                                    <div class="nk-block-des">
+                                                    </div>
+                                            </div>
+                                        </div>
+                                    </div> -->
+                                    <!-- .nk-block-head -->
+
+                                    <slot></slot>
+                                </div>
+                                <!-- footer @s -->
+                                <div class="nk-footer">
+                                    <div class="wide-xl container">
+                                        <div class="nk-footer-wrap g-2">
+                                            <div class="nk-footer-copyright">Copyright &copy; 2024-{{ new Date().getFullYear() }} Mariusz Śmistek.</div>
+                                            <div class="nk-footer-links">
+                                                <ul class="nav nav-sm"></ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- footer @e -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- content @e -->
+            </div>
+            <!-- wrap @e -->
+        </div>
+        <!-- main @e -->
+    </div>
+    <!-- app-root @e -->
+</template>
+
+<script>
+import { Head, Link, usePage } from '@inertiajs/inertia-vue3';
+import appCSS from '../../sass/dashlite/scss/dashlite.scss';
 import { ref } from 'vue';
-import { Head, Link, router } from '@inertiajs/vue3';
-import ApplicationMark from '@/Components/ApplicationMark.vue';
-import Banner from '@/Components/Banner.vue';
-import Dropdown from '@/Components/Dropdown.vue';
-import DropdownLink from '@/Components/DropdownLink.vue';
-import NavLink from '@/Components/NavLink.vue';
-import ResponsiveNavLink from '@/Components/ResponsiveNavLink.vue';
+import axios from 'axios';
+import AuthenticationCardLogo from "@/Components/AuthenticationCardLogo.vue";
+import {Dropdown} from "bootstrap";
 
-defineProps({
-    title: String,
-});
+export default {
+    props: {
+        title: String,
+        breadcrumbs: Array,
+        user: Object,
+    },
 
-const showingNavigationDropdown = ref(false);
+    components: {
+        AuthenticationCardLogo,
+        Head,
+        Link,
+    },
 
-const switchToTeam = (team) => {
-    router.put(route('current-team.update'), {
-        team_id: team.id,
-    }, {
-        preserveState: false,
-    });
-};
+    setup(props) {
+        document.querySelector('body').classList.add('nk-body');
+        document.querySelector('body').classList.add('bg-white');
+        document.querySelector('body').classList.add('npc-subscription');
+        document.querySelector('body').classList.add('has-aside');
+        document.querySelector('body').classList.add('nk-nio-theme');
+        document.querySelector('html').classList.remove('noauth');
+        document.querySelector('html').classList.add('authenticated');
 
-const logout = () => {
-    router.post(route('logout'));
+        const theme = ref(document.querySelector('body').classList.contains('dark-mode') ? 'dark' : 'light');
+        const toggleTheme = () => {
+            document.querySelector('body').classList.contains('dark-mode')
+                ? document.querySelector('body').classList.remove('dark-mode')
+                : document.querySelector('body').classList.add('dark-mode');
+            theme.value = document.querySelector('body').classList.contains('dark-mode') ? 'dark' : 'light';
+        };
+
+        const logOut = () => {
+            axios.post(route('logout'), {}).then((response) => {
+                window.location.href = '/';
+            });
+        };
+
+        // document.documentElement.classList.add('h-auth')
+
+        const presentComingSoon = () => {
+            alert('This feature will be coming back soon! In the meantime, check out our address lists.');
+            return false;
+        };
+
+        const toggleMobileMenu = () => {
+            const mobilMenu = document.querySelectorAll('[data-bs-toggle="dropdown"]');
+            if(mobilMenu)
+            {
+                mobilMenu.classList.toggle('mobile-menu-active');
+            }
+        }
+
+        return {
+            theme,
+            logOut,
+            toggleTheme,
+            presentComingSoon,
+            toggleMobileMenu
+        };
+    },
+    mounted() {
+        const dropdownElementList = document.querySelectorAll('[data-bs-toggle="dropdown"]');
+        dropdownElementList.forEach(item => {
+            new Dropdown(item);
+        })
+        // const flash = this.$page.props.flash;
+        //
+        // if (flash.success) {
+        //     Swal.fire({
+        //         icon: 'success',
+        //         title: 'Success',
+        //         text: flash.success,
+        //         toast: true,
+        //         showConfirmButton: false,
+        //         position: 'top-end',
+        //         timer: 3000,
+        //     });
+        // }
+        //
+        // if (flash.error) {
+        //     Swal.fire({
+        //         icon: 'error',
+        //         title: 'Error',
+        //         text: flash.error,
+        //         toast: true,
+        //         showConfirmButton: false,
+        //         position: 'top-end',
+        //         timer: 3000,
+        //     });
+        // }
+    },
 };
 </script>
 
-<template>
-    <div>
-        <Head :title="title" />
+<style scoped>
+.dropdown-menu {
+    padding: 0.5rem 0;
+    min-width: 240px;
+    max-height: 75vh;
+    overflow-y: auto;
+}
 
-        <Banner />
+.dropdown-item {
+    padding: 0.75rem 1.25rem;
+    font-size: 0.875rem;
+    color: #526484;
+}
 
-        <div class="min-h-screen bg-gray-100">
-            <nav class="bg-white border-b border-gray-100">
-                <!-- Primary Navigation Menu -->
-                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div class="flex justify-between h-16">
-                        <div class="flex">
-                            <!-- Logo -->
-                            <div class="shrink-0 flex items-center">
-                                <Link :href="route('dashboard')">
-                                    <ApplicationMark class="block h-9 w-auto" />
-                                </Link>
-                            </div>
+.dropdown-item:hover {
+    background-color: #f5f6fa;
+    color: #364a63;
+}
 
-                            <!-- Navigation Links -->
-                            <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
-                                <NavLink :href="route('dashboard')" :active="route().current('dashboard')">
-                                    Dashboard
-                                </NavLink>
-                            </div>
-                        </div>
-
-                        <div class="hidden sm:flex sm:items-center sm:ms-6">
-                            <div class="ms-3 relative">
-                                <!-- Teams Dropdown -->
-                                <Dropdown v-if="$page.props.jetstream.hasTeamFeatures" align="right" width="60">
-                                    <template #trigger>
-                                        <span class="inline-flex rounded-md">
-                                            <button type="button" class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 bg-white hover:text-gray-700 focus:outline-none focus:bg-gray-50 active:bg-gray-50 transition ease-in-out duration-150">
-                                                {{ $page.props.auth.user.current_team.name }}
-
-                                                <svg class="ms-2 -me-0.5 size-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 15L12 18.75 15.75 15m-7.5-6L12 5.25 15.75 9" />
-                                                </svg>
-                                            </button>
-                                        </span>
-                                    </template>
-
-                                    <template #content>
-                                        <div class="w-60">
-                                            <!-- Team Management -->
-                                            <div class="block px-4 py-2 text-xs text-gray-400">
-                                                Manage Team
-                                            </div>
-
-                                            <!-- Team Settings -->
-                                            <DropdownLink :href="route('teams.show', $page.props.auth.user.current_team)">
-                                                Team Settings
-                                            </DropdownLink>
-
-                                            <DropdownLink v-if="$page.props.jetstream.canCreateTeams" :href="route('teams.create')">
-                                                Create New Team
-                                            </DropdownLink>
-
-                                            <!-- Team Switcher -->
-                                            <template v-if="$page.props.auth.user.all_teams.length > 1">
-                                                <div class="border-t border-gray-200" />
-
-                                                <div class="block px-4 py-2 text-xs text-gray-400">
-                                                    Switch Teams
-                                                </div>
-
-                                                <template v-for="team in $page.props.auth.user.all_teams" :key="team.id">
-                                                    <form @submit.prevent="switchToTeam(team)">
-                                                        <DropdownLink as="button">
-                                                            <div class="flex items-center">
-                                                                <svg v-if="team.id == $page.props.auth.user.current_team_id" class="me-2 size-5 text-green-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                                </svg>
-
-                                                                <div>{{ team.name }}</div>
-                                                            </div>
-                                                        </DropdownLink>
-                                                    </form>
-                                                </template>
-                                            </template>
-                                        </div>
-                                    </template>
-                                </Dropdown>
-                            </div>
-
-                            <!-- Settings Dropdown -->
-                            <div class="ms-3 relative">
-                                <Dropdown align="right" width="48">
-                                    <template #trigger>
-                                        <button v-if="$page.props.jetstream.managesProfilePhotos" class="flex text-sm border-2 border-transparent rounded-full focus:outline-none focus:border-gray-300 transition">
-                                            <img class="size-8 rounded-full object-cover" :src="$page.props.auth.user.profile_photo_url" :alt="$page.props.auth.user.name">
-                                        </button>
-
-                                        <span v-else class="inline-flex rounded-md">
-                                            <button type="button" class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 bg-white hover:text-gray-700 focus:outline-none focus:bg-gray-50 active:bg-gray-50 transition ease-in-out duration-150">
-                                                {{ $page.props.auth.user.name }}
-
-                                                <svg class="ms-2 -me-0.5 size-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
-                                                </svg>
-                                            </button>
-                                        </span>
-                                    </template>
-
-                                    <template #content>
-                                        <!-- Account Management -->
-                                        <div class="block px-4 py-2 text-xs text-gray-400">
-                                            Manage Account
-                                        </div>
-
-                                        <DropdownLink :href="route('profile.show')">
-                                            Profile
-                                        </DropdownLink>
-
-                                        <DropdownLink v-if="$page.props.jetstream.hasApiFeatures" :href="route('api-tokens.index')">
-                                            API Tokens
-                                        </DropdownLink>
-
-                                        <div class="border-t border-gray-200" />
-
-                                        <!-- Authentication -->
-                                        <form @submit.prevent="logout">
-                                            <DropdownLink as="button">
-                                                Log Out
-                                            </DropdownLink>
-                                        </form>
-                                    </template>
-                                </Dropdown>
-                            </div>
-                        </div>
-
-                        <!-- Hamburger -->
-                        <div class="-me-2 flex items-center sm:hidden">
-                            <button class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 focus:text-gray-500 transition duration-150 ease-in-out" @click="showingNavigationDropdown = ! showingNavigationDropdown">
-                                <svg
-                                    class="size-6"
-                                    stroke="currentColor"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        :class="{'hidden': showingNavigationDropdown, 'inline-flex': ! showingNavigationDropdown }"
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M4 6h16M4 12h16M4 18h16"
-                                    />
-                                    <path
-                                        :class="{'hidden': ! showingNavigationDropdown, 'inline-flex': showingNavigationDropdown }"
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M6 18L18 6M6 6l12 12"
-                                    />
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Responsive Navigation Menu -->
-                <div :class="{'block': showingNavigationDropdown, 'hidden': ! showingNavigationDropdown}" class="sm:hidden">
-                    <div class="pt-2 pb-3 space-y-1">
-                        <ResponsiveNavLink :href="route('dashboard')" :active="route().current('dashboard')">
-                            Dashboard
-                        </ResponsiveNavLink>
-                    </div>
-
-                    <!-- Responsive Settings Options -->
-                    <div class="pt-4 pb-1 border-t border-gray-200">
-                        <div class="flex items-center px-4">
-                            <div v-if="$page.props.jetstream.managesProfilePhotos" class="shrink-0 me-3">
-                                <img class="size-10 rounded-full object-cover" :src="$page.props.auth.user.profile_photo_url" :alt="$page.props.auth.user.name">
-                            </div>
-
-                            <div>
-                                <div class="font-medium text-base text-gray-800">
-                                    {{ $page.props.auth.user.name }}
-                                </div>
-                                <div class="font-medium text-sm text-gray-500">
-                                    {{ $page.props.auth.user.email }}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="mt-3 space-y-1">
-                            <ResponsiveNavLink :href="route('profile.show')" :active="route().current('profile.show')">
-                                Profile
-                            </ResponsiveNavLink>
-
-                            <ResponsiveNavLink v-if="$page.props.jetstream.hasApiFeatures" :href="route('api-tokens.index')" :active="route().current('api-tokens.index')">
-                                API Tokens
-                            </ResponsiveNavLink>
-
-                            <!-- Authentication -->
-                            <form method="POST" @submit.prevent="logout">
-                                <ResponsiveNavLink as="button">
-                                    Log Out
-                                </ResponsiveNavLink>
-                            </form>
-
-                            <!-- Team Management -->
-                            <template v-if="$page.props.jetstream.hasTeamFeatures">
-                                <div class="border-t border-gray-200" />
-
-                                <div class="block px-4 py-2 text-xs text-gray-400">
-                                    Manage Team
-                                </div>
-
-                                <!-- Team Settings -->
-                                <ResponsiveNavLink :href="route('teams.show', $page.props.auth.user.current_team)" :active="route().current('teams.show')">
-                                    Team Settings
-                                </ResponsiveNavLink>
-
-                                <ResponsiveNavLink v-if="$page.props.jetstream.canCreateTeams" :href="route('teams.create')" :active="route().current('teams.create')">
-                                    Create New Team
-                                </ResponsiveNavLink>
-
-                                <!-- Team Switcher -->
-                                <template v-if="$page.props.auth.user.all_teams.length > 1">
-                                    <div class="border-t border-gray-200" />
-
-                                    <div class="block px-4 py-2 text-xs text-gray-400">
-                                        Switch Teams
-                                    </div>
-
-                                    <template v-for="team in $page.props.auth.user.all_teams" :key="team.id">
-                                        <form @submit.prevent="switchToTeam(team)">
-                                            <ResponsiveNavLink as="button">
-                                                <div class="flex items-center">
-                                                    <svg v-if="team.id == $page.props.auth.user.current_team_id" class="me-2 size-5 text-green-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                    </svg>
-                                                    <div>{{ team.name }}</div>
-                                                </div>
-                                            </ResponsiveNavLink>
-                                        </form>
-                                    </template>
-                                </template>
-                            </template>
-                        </div>
-                    </div>
-                </div>
-            </nav>
-
-            <!-- Page Heading -->
-            <header v-if="$slots.header" class="bg-white shadow">
-                <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-                    <slot name="header" />
-                </div>
-            </header>
-
-            <!-- Page Content -->
-            <main>
-                <slot />
-            </main>
-        </div>
-    </div>
-</template>
+@media (max-width: 991px) {
+    .dropdown-item {
+        padding: 0.875rem 1.25rem;
+        font-size: 1rem;
+    }
+}
+</style>
