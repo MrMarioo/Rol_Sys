@@ -4,7 +4,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
-Route::get('/', [\App\Http\Controllers\HomeController::class, 'index'])->name('home');
+
 
 Route::prefix('login')->group(function () {
     Route::get('', function () {
@@ -13,3 +13,8 @@ Route::prefix('login')->group(function () {
     Route::post('', [\App\Http\Controllers\Auth\AuthenticatedSessionController::class, 'store'])->middleware(['guest'])->name('login');
 });
 
+Route::middleware(['auth'])->group(function () {
+    Route::get('/', [\App\Http\Controllers\HomeController::class, 'index'])->name('home');
+
+    Route::resource('fields', \App\Http\Controllers\FieldController::class);
+});
