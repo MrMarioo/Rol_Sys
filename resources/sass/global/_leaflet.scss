@@ -1,0 +1,73 @@
+.leaflet-container {
+    .leaflet-top,
+    .leaflet-bottom {
+        z-index: 500;
+    }
+}
+
+body.not-retina {
+    .leaflet-draw-toolbar .leaflet-draw-draw-circle,
+    .leaflet-draw-toolbar .leaflet-draw-draw-marker,
+    .leaflet-draw-toolbar .leaflet-draw-draw-polygon,
+    .leaflet-draw-toolbar .leaflet-draw-draw-polyline,
+    .leaflet-draw-toolbar .leaflet-draw-draw-rectangle,
+    .leaflet-draw-toolbar .leaflet-draw-edit-edit,
+    .leaflet-draw-toolbar .leaflet-draw-edit-remove {
+        background-image: url(data:image/png;base64,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) !important;
+    }
+}
+
+.leaflet-marker-shadow {
+    display: none !important;
+}
+
+.settings-panel {
+    .card-body {
+        z-index: 999;
+    }
+}
+
+//.line-help-block{
+//    z-index: 10001;
+//    top: 135px;
+//    left: 70px;
+//    background-color: white;
+//    width: 200px;
+//}
+.line-help-block {
+    position: relative;
+    background: $primary;
+    border: 4px solid $primary;
+    z-index: 2001;
+    width: 200px;
+    top: 115px;
+    left: -213px;
+}
+.line-help-block:after,
+.line-help-block:before {
+    left: 100%;
+    top: 50%;
+    border: solid transparent;
+    content: '';
+    height: 0;
+    width: 0;
+    position: absolute;
+    pointer-events: none;
+}
+
+.line-help-block:after {
+    border-color: rgba(255, 255, 255, 0);
+    border-left-color: $primary;
+    border-width: 15px;
+    margin-top: -15px;
+}
+.line-help-block:before {
+    border-color: rgba(245, 12, 191, 0);
+    border-left-color: $primary;
+    border-width: 22px;
+    margin-top: -22px;
+}
+
+.vue2leaflet-map {
+    height: 800px;
+}

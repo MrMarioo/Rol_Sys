@@ -1,0 +1,44 @@
+/**
+ * Custom variables followed by theme variables followed by Bootstrap variables
+ * to ensure cascade of styles.
+ */
+
+    // Bootstrap functions
+    @import '../../../node_modules/bootstrap/scss/functions';
+
+    // // Theme functions
+    @import 'theme/functions';
+
+    // // Custom variables
+    @import 'user-variables';
+
+    // // Theme variables
+    @import 'theme/variables';
+
+    // // Bootstrap core
+    @import '../../../node_modules/bootstrap/scss/bootstrap'; 
+
+    // // Theme core
+    @import 'theme/theme';
+
+    // // Global
+    @import '../global/footer';
+    @import '../global/leaflet';
+    @import '../global/search';
+    @import '../global/sublist';
+    @import '../global/loader';
+    @import '../../icons/_flaticon';
+
+    // // Custom core
+    @import 'user';
+    @import 'custom/breadcrumb';
+    @import 'custom/card';
+    @import 'custom/cookiebar';
+
+
+    // // Custom Utilities
+    @import 'custom/utilities/background';
+    @import 'custom/utilities/zindex';
+
+    //Homepage
+    @import 'homepage.scss';  

@@ -1,0 +1,127 @@
+//
+// user-variables.scss
+// Use this to overwrite Bootstrap and Landkit variables
+//
+
+// Example of a variable override to change Landkit's background color
+// Remove the "//" to comment it in and see it in action!
+// $font-family-base: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif;
+
+
+//
+// Color system
+//
+
+// stylelint-disable
+$white: #FFFFFF !default;
+$gray-100: #F9FBFD !default;
+$gray-200: #EDF2F9 !default;
+$gray-300: #E3EBF6 !default;
+$gray-400: #D2DDEC !default;
+$gray-500: #B1C2D9 !default;
+$gray-600: #95AAC9 !default;
+$gray-700: #6E84A3 !default;
+$gray-800: #3B506C !default;
+$gray-900: #283E59 !default;
+$black: #12263F !default;
+
+$gray-600-dark: #244166 !default;
+$gray-700-dark: #1E3A5C !default;
+$gray-800-dark: #152E4D !default;
+$gray-900-dark: #132A46 !default;
+$black-dark: #12263F !default;
+
+$blue: #2C7BE5 !default;
+$indigo: #727cf5 !default; // NOT USED
+$purple: #6b5eae !default;
+$pink: #ff679b !default; // NOT USED
+$red: #E63757 !default;
+$orange: #fd7e14 !default; // NOT USED
+$yellow: #F6C343 !default;
+$green: #00D97E !default;
+$teal: #02a8b5 !default; // NOT USED
+$cyan: #39afd1 !default; // NOT USED
+
+$primary: $blue !default;
+$secondary: $gray-700 !default;
+$success: $green !default;
+$info: $cyan !default;
+$warning: $yellow !default;
+$danger: $red !default;
+$light: $gray-100 !default;
+$dark: $black !default;
+
+$offwhite: #F9FBFD;
+
+$theme-colors: () !default;
+$theme-colors: (
+        "primary": $primary,
+        "secondary": $secondary,
+        "success": $success,
+        "info": $info,
+        "warning": $warning,
+        "danger": $danger,
+        "light": $light,
+        "dark": $dark,
+        "offwhite": $offwhite,
+        "white": $white
+);
+// stylelint-enable
+
+
+$font-family-sans-serif: 'Cerebri Sans', sans-serif;
+$font-family-base: $font-family-sans-serif;
+$font-size-base: 0.9375rem; // 15px
+$font-size-sm: ($font-size-base * .866666667) !default; // 13px
+
+
+$border-color: $gray-300;
+
+// Grid containers
+//
+// Define the maximum width of `.container` for different screen sizes.
+
+$container-max-widths: (
+    sm: 540px,
+    md: 720px,
+    lg: 960px,
+    xl: 1140px
+);
+
+// Header
+
+$header-margin-bottom: 2rem !default;
+$header-spacing-y: 1.5rem !default;
+$header-body-border-width: 1px !default;
+$header-body-border-color: $border-color !default;
+
+$header-body-border-color-dark: fade-out($header-body-border-color, .9) !default;
+
+
+// Breadcrumbs
+
+$breadcrumb-padding-x: 0 !default;
+
+$breadcrumb-margin-bottom: 0 !default;
+
+$breadcrumb-bg: transparent !default;
+$breadcrumb-divider-color: $gray-400 !default;
+$breadcrumb-active-color: $gray-600 !default;
+$breadcrumb-divider: "" !default;
+
+$breadcrumb-padding-y-sm: .5rem !default;
+$breadcrumb-padding-x-sm: .5rem !default;
+$breadcrumb-item-padding-sm: .25rem !default;
+
+$breadcrumb-margin-bottom-sm: .25rem !default;
+$breadcrumb-font-size-sm: $font-size-sm !default;
+
+
+
+// Navbar
+$navbar-nav-link-padding-x:         1rem;
+
+
+// Backgrounds
+
+$bg-soft-level: -11 !default;

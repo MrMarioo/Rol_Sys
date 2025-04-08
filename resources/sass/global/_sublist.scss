@@ -1,0 +1,12 @@
+ol.sublist {
+    counter-reset: item;
+
+    li {
+        display: block;
+
+        &:before {
+            content: counters(item, '.') '. ';
+            counter-increment: item;
+        }
+    }
+}
