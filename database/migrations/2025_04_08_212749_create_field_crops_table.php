@@ -11,18 +11,16 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('field_data', function (Blueprint $table) {
+        Schema::create('field_crops', function (Blueprint $table) {
             $table->id();
             $table->foreignId('field_id')->constrained()->onDelete('cascade');
-            $table->date('collection_date');
-            $table->string('data_type');
-            $table->json('data');
-            $table->decimal('latitude', 10, 7)->nullable();
-            $table->decimal('longitude', 10, 7)->nullable();
-            $table->json('metadata')->nullable();
+            $table->foreignId('crop_id')->constrained()->onDelete('cascade');
+            $table->date('planting_date');
+            $table->date('expected_harvest_date')->nullable();
+            $table->date('actual_harvest_date')->nullable();
+            $table->decimal('yield', 10, 2)->nullable();
+            $table->string('status')->default('active');
             $table->timestamps();
-
-            $table->index(['field_id', 'collection_date', 'data_type']);
         });
     }
 
@@ -31,6 +29,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('fields');
+        Schema::dropIfExists('field_crops');
     }
 };
