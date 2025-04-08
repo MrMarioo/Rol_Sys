@@ -1,0 +1,46 @@
+/** Bootstrap v5.3.0 */
+
+// scss-docs-start import-stack
+// Configuration
+@import "../../../../bootstrap-5.0.2/scss/mixins/banner";
+@include bsBanner("");
+
+@import "../../../../bootstrap-5.0.2/scss/mixins";
+@import "../../../../bootstrap-5.0.2/scss/utilities";
+// Layout & components
+@import "../../../../bootstrap-5.0.2/scss/root";
+@import "../../../../bootstrap-5.0.2/scss/reboot";
+@import "../../../../bootstrap-5.0.2/scss/type";
+@import "../../../../bootstrap-5.0.2/scss/images";
+@import "../../../../bootstrap-5.0.2/scss/containers";
+@import "../../../../bootstrap-5.0.2/scss/grid";
+@import "../../../../bootstrap-5.0.2/scss/tables";
+@import "../../../../bootstrap-5.0.2/scss/forms";
+@import "../../../../bootstrap-5.0.2/scss/buttons";
+@import "../../../../bootstrap-5.0.2/scss/transitions";
+@import "../../../../bootstrap-5.0.2/scss/dropdown";
+@import "../../../../bootstrap-5.0.2/scss/button-group";
+@import "../../../../bootstrap-5.0.2/scss/nav";
+@import "../../../../bootstrap-5.0.2/scss/navbar";
+@import "../../../../bootstrap-5.0.2/scss/card";
+@import "../../../../bootstrap-5.0.2/scss/accordion";
+@import "../../../../bootstrap-5.0.2/scss/breadcrumb";
+@import "../../../../bootstrap-5.0.2/scss/pagination";
+@import "../../../../bootstrap-5.0.2/scss/badge";
+@import "../../../../bootstrap-5.0.2/scss/alert";
+@import "../../../../bootstrap-5.0.2/scss/progress";
+@import "../../../../bootstrap-5.0.2/scss/list-group";
+@import "../../../../bootstrap-5.0.2/scss/close";
+@import "../../../../bootstrap-5.0.2/scss/toasts";
+@import "../../../../bootstrap-5.0.2/scss/modal";
+@import "../../../../bootstrap-5.0.2/scss/tooltip";
+@import "../../../../bootstrap-5.0.2/scss/popover";
+@import "../../../../bootstrap-5.0.2/scss/carousel";
+@import "../../../../bootstrap-5.0.2/scss/spinners";
+@import "../../../../bootstrap-5.0.2/scss/offcanvas";
+@import "../../../../bootstrap-5.0.2/scss/placeholders";
+// Helpers
+@import "../../../../bootstrap-5.0.2/scss/helpers";
+// Utilites
+@import "../../../../bootstrap-5.0.2/scss/utilities/api";
+// scss-docs-end import-stack
