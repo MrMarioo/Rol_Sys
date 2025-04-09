@@ -1,7 +1,7 @@
 {
     "private": true,
     "scripts": {
-        "dev": "vite",
+        "dev": "vite ",
         "build": "vite build",
         "watch": "vite build --watch",
         "prettier": "npx prettier **/* --write --ignore-path ./.prettierignore --ignore-unknown --list-different",
