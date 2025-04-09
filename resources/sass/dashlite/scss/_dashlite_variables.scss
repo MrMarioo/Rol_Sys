@@ -2,22 +2,23 @@
 ////////     CORE DASHLITE VARIABLES    ///// //////////
 ////////////////////////////////////////////////////////
 @use "sass:math";
+@use "sass:color";
 /////////    COLORS    ///////////
 //////////////////////////////////////
 $white:		#fff;
 $black: 	#000;
 
-$light-100: #ebeef2; 
-$light-200: #e5e9f2; 
-$light-300: #dbdfea; 
-$light-400: #b7c2d0; 
-$light-500: #8091a7; 
+$light-100: #ebeef2;
+$light-200: #e5e9f2;
+$light-300: #dbdfea;
+$light-400: #b7c2d0;
+$light-500: #8091a7;
 $light-600: #3c4d62;
 $light-700: #344357;
 $light-800: #2b3748;
 $light-900: #1f2b3a;
 
-$lighter:	#f5f6fa; 
+$lighter:	#f5f6fa;
 $light:		$light-100;
 $dark:		$light-900;
 $darker:	#101924;
@@ -25,7 +26,7 @@ $darker:	#101924;
 
 $red: 		#e85347;
 $yellow:	#f4bd0e;
-$green: 	#1ee0ac; 
+$green: 	#1ee0ac;
 $cyan:		#09c2de;
 $blue:		#559bfb;
 $azure:		#1676fb;
@@ -65,7 +66,7 @@ $body-bg:			$lighter;
 $body-color:		$base-text;
 
 $link-color:        		$accent-500;
-$link-hover-color:  		darken($link-color, 10%);
+$link-hover-color:  		color.scale($link-color, $lightness: -10%);
 
 $shadow-color: 				$light-800;
 $shadow-color-light: 		$light-600;
@@ -151,7 +152,7 @@ $fx-sz-12:			12px;
 $fx-sz-13:			13px;
 $fx-sz-14:			14px;
 $fx-sz-15:			15px;
-$fx-sz-16:			16px; 
+$fx-sz-16:			16px;
 
 $gutter-width:           28px;
 $stretch-gap-x:          (4px + math.div($gutter-width,2));
@@ -210,7 +211,7 @@ $h-margin-bottom:		math.div($spacer , 2);
 $h-font-family:  		$alt-font-family;
 $h-font-weight:  		$fw-bold;
 $h-line-height:  		1.1;
-$h-color:				$base-color; 
+$h-color:				$base-color;
 
 $lead-fs:				$fs-base * 1.15;
 $lead-fs-dsk:			$fs-base * 1.25;
@@ -347,7 +348,7 @@ $input-padding-x:                       $field-padding-x;
 $input-font-family:                     $field-font-family;
 $input-font-size:                       $field-font-size;
 $input-font-weight:                     $field-font-weight;
-$input-line-height:                     $field-line-height; 
+$input-line-height:                     $field-line-height;
 
 $input-padding-y-sm:                    $field-padding-y-sm;
 $input-padding-x-sm:                    $field-padding-x-sm;
@@ -365,7 +366,7 @@ $input-font-size-xl:                    $field-font-size-xl;
 $input-line-height-xl:                  $field-line-height-xl;
 
 $input-bg:                              $field-bg;
-$input-disabled-bg:                     $field-bg-disable; 
+$input-disabled-bg:                     $field-bg-disable;
 
 $input-color:                           $field-color;
 $input-border-color:                    $field-border-color;
@@ -438,7 +439,7 @@ $card-columns-count:                3;
 $card-columns-gap:                  1.25rem;
 $card-columns-margin:               $card-spacer-y;
 
-// IO 
+// IO
 $card-bordered-color: 				$light-300;
 $card-stretch-gap-x: 				$stretch-gap-x;
 
@@ -481,7 +482,7 @@ $badge-pill-border-radius:          10rem;
 $badge-dot-width:                   6px;
 $badge-dot-gap:                     6px;
 
-$badge-dot-width-sm:                8px;        
+$badge-dot-width-sm:                8px;
 $badge-dot-gap-sm:                  8px;
 
 // IO
@@ -655,9 +656,9 @@ $switch-border-calc:                    $checkbox-radio-switch-border*2;
 $switch-border-calc-1-5x:               $checkbox-radio-switch-border*3;
 $switch-border-calc-2x:                 $checkbox-radio-switch-border*4;
 $switch-border-calc-3x:                 $checkbox-radio-switch-border*6;
-$switch-indicator-active-clac:          $switch-width - $switch-indicator-size;  
-$switch-indicator-active-clac-sm:       $switch-width-sm - $switch-indicator-size-sm;  
-$switch-indicator-active-clac-lg:       $switch-width-lg - $switch-indicator-size-lg;  
+$switch-indicator-active-clac:          $switch-width - $switch-indicator-size;
+$switch-indicator-active-clac-sm:       $switch-width-sm - $switch-indicator-size-sm;
+$switch-indicator-active-clac-lg:       $switch-width-lg - $switch-indicator-size-lg;
 
 $switch-indicator-active-position:      calc(#{$switch-indicator-active-clac} - #{$switch-border-calc-2x});
 $switch-indicator-active-position-sm:   calc(#{$switch-indicator-active-clac-sm} - #{$switch-border-calc-2x});
@@ -746,10 +747,10 @@ $sidebar-bg-color:					$lighter;
 $sidebar-border-color:              $light-200;
 
 $sidebar-bg-dark-color:			    $darker;
-$sidebar-border-dark-color:         lighten($sidebar-bg-dark-color, 10%);
+$sidebar-border-dark-color:         color.scale($sidebar-bg-dark-color, $lightness: 10%);
 //@i-v120 -s-
-$sidebar-bg-theme-color:			darken($accent-dark,2%);
-$sidebar-border-theme-color:		lighten($sidebar-bg-theme-color, 10%);
+$sidebar-bg-theme-color:			color.scale($accent-dark, $lightness: -2%);
+$sidebar-border-theme-color:		color.scale($sidebar-bg-theme-color, $lightness: 10%);
 //@i-v120 -e-
 $sidebar-bg-light-color:            $white;
 $sidebar-border-light-color:        $light;
@@ -769,18 +770,18 @@ $content-sidebar-border-color:		$border-light;
 
 // // Headers
 $header-main-gap-x:                 $content-gap-x;
-$header-main-gap-x-sm:              $content-gap-x-sm; 
+$header-main-gap-x-sm:              $content-gap-x-sm;
 $header-main-gap-y:                 14px;
 $header-main-border-width:          1px;
 $header-height:                     ($header-main-gap-y*2 + $logo-height + $header-main-border-width);
-$header-min-width:                  $min-body-width; 
+$header-min-width:                  $min-body-width;
 
 $header-bg-color:                   $lighter;
 $header-bg-dark-color:              $darker;
-$header-bg-theme-color:             darken($accent-dark,2%); //@i-v120 
+$header-bg-theme-color:             color.scale($accent-dark, $lightness: -2%); //@i-v120
 $header-border-bottom:				$border-light;
-$header-border-dark-bottom:		    lighten($header-bg-dark-color, 10%);
-$header-border-theme-bottom:		lighten($header-bg-theme-color, 10%);
+$header-border-dark-bottom:		    color.scale($header-bg-dark-color, $lightness: 10%);
+$header-border-theme-bottom:		color.scale($header-bg-theme-color, $lightness: 10%);
 $header-toogle-btn-color:			$base-500;
 $header-toogle-btn-focus-color:		$accent-color;
 $header-toogle-btn-border:			$btn-border-width solid transparent;
@@ -794,13 +795,13 @@ $header-col-width:                  calc(50% - #{$header-col-width-safe});
 
 //Footer
 $footer-main-gap-x:                 $content-gap-x;
-$footer-main-gap-x-sm:              $content-gap-x-sm; 
+$footer-main-gap-x-sm:              $content-gap-x-sm;
 $footer-main-gap-y:                 20px;
 $footer-main-border-width:          1px;
-$footer-min-width:                  $min-body-width; 
+$footer-min-width:                  $min-body-width;
 
 $footer-bg-color:                   $white;
-$footer-bg-dark-color:              darken($accent-dark,1%);
+$footer-bg-dark-color:              color.scale($accent-dark, $lightness: -1%);
 $footer-border-bottom:				$border-light;
 
 

@@ -22,7 +22,7 @@
                                                 <div class="user-avatar sm">
                                                     <em class="icon ni ni-user-alt"></em>
                                                 </div>
-                                                <div class="user-name dropdown-indicator d-none d-sm-block">{{ user.name }}</div>
+                                                <div class="user-name dropdown-indicator d-none d-sm-block">{{ user?.name }}</div>
                                             </div>
                                         </a>
                                         <div class="dropdown-menu dropdown-menu-md dropdown-menu-end dropdown-menu-s1">
@@ -32,8 +32,8 @@
                                                         <span>AB</span>
                                                     </div>
                                                     <div class="user-info">
-                                                        <span class="lead-text">{{ user.name }}</span>
-                                                        <span class="sub-text">{{ user.email }}</span>
+                                                        <span class="lead-text">{{ user?.name }}</span>
+                                                        <span class="sub-text">{{ user?.email }}</span>
                                                     </div>
                                                     <div class="user-action">
                                                         <a class="btn btn-icon me-n2" href="#"><em class="icon ni ni-setting"></em></a>
@@ -42,18 +42,18 @@
                                             </div>
                                             <div class="dropdown-inner">
                                                 <ul class="link-list">
-<!--                                                    <li>-->
-<!--                                                        <Link href="/user/profile">-->
-<!--                                                            <em class="icon ni ni-user-alt"></em>-->
-<!--                                                            <span>View Profile</span>-->
-<!--                                                        </Link>-->
-<!--                                                    </li>-->
-<!--                                                    <li>-->
-<!--                                                        <Link href="/dashboard/login-activity">-->
-<!--                                                            <em class="icon ni ni-activity-alt"></em>-->
-<!--                                                            <span>Login Activity</span>-->
-<!--                                                        </Link>-->
-<!--                                                    </li>-->
+                                                    <!--                                                    <li>-->
+                                                    <!--                                                        <Link href="/user/profile">-->
+                                                    <!--                                                            <em class="icon ni ni-user-alt"></em>-->
+                                                    <!--                                                            <span>View Profile</span>-->
+                                                    <!--                                                        </Link>-->
+                                                    <!--                                                    </li>-->
+                                                    <!--                                                    <li>-->
+                                                    <!--                                                        <Link href="/dashboard/login-activity">-->
+                                                    <!--                                                            <em class="icon ni ni-activity-alt"></em>-->
+                                                    <!--                                                            <span>Login Activity</span>-->
+                                                    <!--                                                        </Link>-->
+                                                    <!--                                                    </li>-->
                                                     <!-- <li><Link href="/dashboard/subscription"><em class="icon ni ni-sign-gbp"></em><span>Pricing</span></Link></li> -->
                                                     <li>
                                                         <a class="dark-switch" :class="{ active: theme == 'dark' }" @click="toggleTheme" href="#">
@@ -184,22 +184,26 @@
                                                             <em class="icon ni ni-dashboard me-2"></em>
                                                             <span>Dashboard</span>
                                                         </Link>
-                                                    </li> <li>
+                                                    </li>
+                                                    <li>
                                                         <Link href="/fields" class="dropdown-item d-flex align-items-center">
                                                             <em class="icon ni map me-2"></em>
                                                             <span>Fields</span>
                                                         </Link>
-                                                    </li> <li>
+                                                    </li>
+                                                    <li>
                                                         <Link href="/field-data" class="dropdown-item d-flex align-items-center">
                                                             <em class="icon ni ni-server me-2"></em>
                                                             <span>Fields Data</span>
                                                         </Link>
-                                                    </li> <li>
+                                                    </li>
+                                                    <li>
                                                         <Link href="/analytics" class="dropdown-item d-flex align-items-center">
                                                             <em class="icon ni growth me-2"></em>
                                                             <span>Analytics</span>
                                                         </Link>
-                                                    </li> <li>
+                                                    </li>
+                                                    <li>
                                                         <Link href="/reports" class="dropdown-item d-flex align-items-center">
                                                             <em class="icon ni files me-2"></em>
                                                             <span>Reports</span>
@@ -316,7 +320,9 @@
                                 <div class="nk-footer">
                                     <div class="wide-xl container">
                                         <div class="nk-footer-wrap g-2">
-                                            <div class="nk-footer-copyright">Copyright &copy; 2024-{{ new Date().getFullYear() }} Mariusz Śmistek.</div>
+                                            <div class="nk-footer-copyright">
+                                                Copyright &copy; 2024-{{ new Date().getFullYear() }} Mariusz Śmistek.
+                                            </div>
                                             <div class="nk-footer-links">
                                                 <ul class="nav nav-sm"></ul>
                                             </div>
@@ -339,11 +345,10 @@
 
 <script>
 import { Head, Link, usePage } from '@inertiajs/inertia-vue3';
-import appCSS from '../../sass/dashlite/scss/dashlite.scss';
 import { ref } from 'vue';
 import axios from 'axios';
-import AuthenticationCardLogo from "@/Components/AuthenticationCardLogo.vue";
-import {Dropdown} from "bootstrap";
+import AuthenticationCardLogo from '@/Components/AuthenticationCardLogo.vue';
+import { Dropdown } from 'bootstrap';
 
 export default {
     props: {
@@ -390,25 +395,24 @@ export default {
 
         const toggleMobileMenu = () => {
             const mobilMenu = document.querySelectorAll('[data-bs-toggle="dropdown"]');
-            if(mobilMenu)
-            {
+            if (mobilMenu) {
                 mobilMenu.classList.toggle('mobile-menu-active');
             }
-        }
+        };
 
         return {
             theme,
             logOut,
             toggleTheme,
             presentComingSoon,
-            toggleMobileMenu
+            toggleMobileMenu,
         };
     },
     mounted() {
         const dropdownElementList = document.querySelectorAll('[data-bs-toggle="dropdown"]');
-        dropdownElementList.forEach(item => {
+        dropdownElementList.forEach((item) => {
             new Dropdown(item);
-        })
+        });
         // const flash = this.$page.props.flash;
         //
         // if (flash.success) {
