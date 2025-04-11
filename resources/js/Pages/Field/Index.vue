@@ -76,7 +76,6 @@ export default {
             </div>
             <div class="nk-block-head-content">
                 <div class="toggle-wrap nk-block-tools-toggle">
-                    <!-- Changed from Link to button to open modal -->
                     <button @click="openCreateForm" class="btn btn-primary">
                         <em class="icon ni ni-plus"></em>
                         <span>Add Field</span>
