@@ -22,6 +22,14 @@ Route::middleware(['auth'])->group(function () {
     ])->name('dashboard');
 
     Route::resource('fields', \App\Http\Controllers\FieldController::class);
+    Route::get('fields/{field}/data', [
+        \App\Http\Controllers\FieldController::class,
+        'data',
+    ])->name('fields.data');
+    Route::get('fields/{field}/analytics', [
+        \App\Http\Controllers\FieldController::class,
+        'analytics',
+    ])->name('fields.analytics');
 
     //    Route::get('/field-data', [FieldDataController::class, 'index'])->name('field-data.index');
     //    Route::get('/field-data/{field}', [FieldDataController::class, 'show'])->name('field-data.show');

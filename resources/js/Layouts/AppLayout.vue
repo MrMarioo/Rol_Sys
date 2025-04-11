@@ -344,7 +344,7 @@
 </template>
 
 <script>
-import { Head, Link, usePage } from '@inertiajs/inertia-vue3';
+import { Head, Link, usePage } from '@inertiajs/vue3';
 import { ref } from 'vue';
 import axios from 'axios';
 import AuthenticationCardLogo from '@/Components/AuthenticationCardLogo.vue';

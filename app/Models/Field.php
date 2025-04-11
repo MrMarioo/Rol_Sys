@@ -55,4 +55,55 @@ class Field extends Model
             )
             ->withTimestamps();
     }
+
+    public function scopeQuerySearch($query)
+    {
+        return $query
+            ->when(request('search'), function ($q, $search) {
+                if (is_string($search)) {
+                    $q->where(function ($subQuery) use ($search) {
+                        $subQuery
+                            ->where('name', 'like', "%{$search}%")
+                            ->orWhere('location', 'like', "%{$search}%")
+                            ->orWhere('description', 'like', "%{$search}%");
+                    });
+                }
+            })
+            ->when(request('name'), function ($q, $name) {
+                $q->where('name', 'like', "%{$name}%");
+            })
+            ->when(request('location'), function ($q, $location) {
+                $q->where('location', 'like', "%{$location}%");
+            })
+            ->when(request('description'), function ($q, $description) {
+                $q->where('description', 'like', "%{$description}%");
+            })
+            ->when(request('size_min'), function ($q, $sizeMin) {
+                $q->where('size', '>=', $sizeMin);
+            })
+            ->when(request('size_max'), function ($q, $sizeMax) {
+                $q->where('size', '<=', $sizeMax);
+            })
+            ->when(request('status'), function ($q, $status) {
+                $q->where('status', $status);
+            })
+            ->when(request('user_id', auth()->id()), function ($q, $userId) {
+                $q->where('user_id', $userId);
+            })
+            ->when(request('crop_id'), function ($q, $cropId) {
+                $q->whereHas('crops', function ($subQuery) use ($cropId) {
+                    $subQuery->where('crop_id', $cropId);
+                });
+            })
+            ->when(request('data_from'), function ($q, $dataFrom) {
+                $q->whereHas('fieldData', function ($subQuery) use ($dataFrom) {
+                    $subQuery->where('collection_date', '>=', $dataFrom);
+                });
+            })
+            ->when(request('data_to'), function ($q, $dataTo) {
+                $q->whereHas('fieldData', function ($subQuery) use ($dataTo) {
+                    $subQuery->where('collection_date', '<=', $dataTo);
+                });
+            });
+    }
 }
