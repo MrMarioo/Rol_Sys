@@ -6,9 +6,18 @@ import { FieldStatus } from '@/Enum';
 import { Collection } from 'ol';
 import Feature from 'ol/Feature';
 import Polygon from 'ol/geom/Polygon';
+import OSM from 'ol/source/OSM';
 import Swal from 'sweetalert2';
+import { Select2ajax } from '@netblink/vue-components';
+import TileLayer from 'ol/layer/Tile';
+import XYZ from 'ol/source/XYZ';
+import Map from 'ol/Map';
+import View from 'ol/View';
 
 export default {
+    components: {
+        Select2ajax,
+    },
     props: {
         crops: {
             type: Array,
@@ -28,8 +37,14 @@ export default {
             description: null,
             boundaries: null,
             status: FieldStatus.Active,
-            crop_ids: [],
+            crop_id: [],
         });
+
+        // Prepare crop options for select
+        const cropsOptions = props.crops.map((crop) => ({
+            id: crop.id,
+            text: crop.name,
+        }));
 
         // OpenLayers Map variables
         const mapElement = ref(null);
@@ -44,15 +59,68 @@ export default {
         const view = ref(null);
         const currentFeature = ref(null);
         const isLoading = ref(false);
+        const olMap = ref(null);
+
+        // Map configuration
+        const satelliteUrl = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
+        const labelsUrl = 'https://stamen-tiles.a.ssl.fastly.net/toner-labels/{z}/{x}/{y}.png';
+        const showLabels = ref(true);
 
         const openModal = () => {
             showModal.value = true;
+            setTimeout(() => {
+                initMap();
+            }, 100);
         };
 
         const closeModal = () => {
             showModal.value = false;
             form.reset();
             resetMap();
+
+            if (olMap.value) {
+                olMap.value.setTarget(null);
+                olMap.value = null;
+            }
+        };
+
+        const initMap = () => {
+            if (olMap.value) return;
+
+            const satelliteLayer = new TileLayer({
+                source: new XYZ({
+                    url: satelliteUrl,
+                    crossOrigin: 'anonymous',
+                }),
+            });
+
+            const osmLayer = new TileLayer({
+                source: new OSM(),
+                opacity: 0.4, // Semi-przezroczysta warstwa
+                visible: showLabels.value,
+            });
+
+            const labelsLayer = new TileLayer({
+                source: new XYZ({
+                    url: labelsUrl,
+                    crossOrigin: 'anonymous',
+                }),
+                visible: showLabels.value,
+            });
+
+            olMap.value = new Map({
+                target: mapElement.value,
+                layers: [satelliteLayer, osmLayer],
+                view: new View({
+                    center: center.value,
+                    zoom: zoom.value,
+                    projection: projection.value,
+                }),
+            });
+
+            watch(showLabels, (newValue) => {
+                labelsLayer.setVisible(newValue);
+            });
         };
 
         const resetMap = () => {
@@ -210,6 +278,9 @@ export default {
             drawend,
             modifyend,
             featureSelected,
+            satelliteUrl,
+            cropsOptions,
+            showLabels,
         };
     },
 };
@@ -235,48 +306,16 @@ export default {
                                     </div>
                                     <div class="card-body p-0">
                                         <div style="height: 500px">
-                                            <ol-map
-                                                ref="mapElement"
-                                                :loadTilesWhileAnimating="true"
-                                                :loadTilesWhileInteracting="true"
-                                                style="height: 100%"
-                                            >
-                                                <ol-view ref="view" :center="center" :rotation="rotation" :zoom="zoom" :projection="projection" />
-
-                                                <ol-tile-layer>
-                                                    <ol-source-osm />
-                                                </ol-tile-layer>
-
-                                                <ol-vector-layer>
-                                                    <ol-source-vector :projection="projection" :features="highlightedFeatures">
-                                                        <ol-interaction-modify
-                                                            v-if="modifyEnabled"
-                                                            :features="selectedFeatures"
-                                                            @modifyend="modifyend"
-                                                        ></ol-interaction-modify>
-                                                        <ol-interaction-draw
-                                                            v-if="drawEnabled"
-                                                            type="Polygon"
-                                                            :stopClick="true"
-                                                            @drawend="drawend"
-                                                            @drawstart="drawstart"
-                                                        />
-                                                        <ol-interaction-snap v-if="modifyEnabled || drawEnabled" />
-                                                    </ol-source-vector>
-                                                </ol-vector-layer>
-
-                                                <ol-interaction-select @select="featureSelected" :features="selectedFeatures">
-                                                    <ol-style>
-                                                        <ol-style-stroke color="#0066ff" :width="2"></ol-style-stroke>
-                                                        <ol-style-fill color="rgba(255, 255, 255, 0.4)"></ol-style-fill>
-                                                    </ol-style>
-                                                </ol-interaction-select>
-                                            </ol-map>
+                                            <div ref="mapElement" style="width: 100%; height: 100%"></div>
                                         </div>
                                     </div>
                                     <div class="card-footer bg-light p-3">
                                         <div class="row align-items-center">
-                                            <div class="col-md-12 text-end">
+                                            <div class="col-md-12 d-flex justify-content-between">
+                                                <div class="form-check form-switch pt-1">
+                                                    <input class="form-check-input" type="checkbox" id="show-labels" v-model="showLabels" />
+                                                    <label class="form-check-label" for="show-labels">Show city names</label>
+                                                </div>
                                                 <button type="button" class="btn btn-primary" @click="enableDraw">
                                                     <em class="icon ni ni-edit me-1"></em>
                                                     <span>{{ drawEnabled ? 'Drawing Active' : 'Start Drawing' }}</span>
@@ -353,6 +392,7 @@ export default {
                                         <span class="text-danger">*</span>
                                     </label>
                                     <div class="form-control-wrap">
+                                        <!-- Using regular select for status -->
                                         <select class="form-select" id="field-status" v-model="form.status" required>
                                             <option v-for="status in statuses" :key="status" :value="status">
                                                 {{ status === 'active' ? 'Active' : status === 'inactive' ? 'Inactive' : status }}
@@ -367,14 +407,9 @@ export default {
                                 <div class="form-group">
                                     <label class="form-label" for="field-crops">Crops</label>
                                     <div class="form-control-wrap">
-                                        <select class="form-select" id="field-crops" v-model="form.crop_ids" multiple>
-                                            <option v-for="crop in crops" :key="crop.id" :value="crop.id">
-                                                {{ crop.name }}
-                                            </option>
-                                        </select>
+                                        <Select2ajax id="field-crops" :form="form" field="crop_id" :url="route('crops.find')" />
                                     </div>
-                                    <div v-if="form.errors.crop_ids" class="form-note text-danger">{{ form.errors.crop_ids }}</div>
-                                    <div class="form-note">Hold Ctrl (Cmd on Mac) to select multiple crops.</div>
+                                    <div v-if="form.errors.crop_id" class="form-note text-danger">{{ form.errors.crop_id }}</div>
                                 </div>
                             </div>
 

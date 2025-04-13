@@ -39,7 +39,6 @@
         "@inertiajs/inertia-vue3": "^0.6.0",
         "@inertiajs/progress": "^0.2.7",
         "@mysticwave/collect-me": "^1.0.5",
-        "@netblink/nb-prettier": "github:NetBlink/nb-prettier",
         "@netblink/vue-components": "^1.0.3",
         "@vuepic/vue-datepicker": "^5.2.1",
         "animejs": "^3.2.2",

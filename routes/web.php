@@ -31,6 +31,13 @@ Route::middleware(['auth'])->group(function () {
         'analytics',
     ])->name('fields.analytics');
 
+    Route::name('crops.')
+        ->prefix('crops')
+        ->controller(\App\Http\Controllers\CropController::class)
+        ->group(function () {
+            Route::get('find', 'find')->name('find');
+        });
+
     //    Route::get('/field-data', [FieldDataController::class, 'index'])->name('field-data.index');
     //    Route::get('/field-data/{field}', [FieldDataController::class, 'show'])->name('field-data.show');
     //    Route::post('/field-data/import', [FieldDataController::class, 'import'])->name('field-data.import');
