@@ -1,6 +1,6 @@
 <script>
 import { useForm } from '@inertiajs/vue3';
-import { ref, inject, watch } from 'vue';
+import { ref, inject, watch, onMounted, onBeforeUnmount } from 'vue';
 import { router } from '@inertiajs/vue3';
 import { FieldStatus } from '@/Enum';
 import { Collection } from 'ol';
@@ -13,6 +13,13 @@ import TileLayer from 'ol/layer/Tile';
 import XYZ from 'ol/source/XYZ';
 import Map from 'ol/Map';
 import View from 'ol/View';
+import Draw from 'ol/interaction/Draw';
+import Modify from 'ol/interaction/Modify';
+import Select from 'ol/interaction/Select';
+import VectorSource from 'ol/source/Vector';
+import VectorLayer from 'ol/layer/Vector';
+import { Fill, Stroke, Style } from 'ol/style';
+import { click, pointerMove } from 'ol/events/condition';
 
 export default {
     components: {
@@ -40,12 +47,6 @@ export default {
             crop_id: [],
         });
 
-        // Prepare crop options for select
-        const cropsOptions = props.crops.map((crop) => ({
-            id: crop.id,
-            text: crop.name,
-        }));
-
         // OpenLayers Map variables
         const mapElement = ref(null);
         const drawEnabled = ref(false);
@@ -60,6 +61,12 @@ export default {
         const currentFeature = ref(null);
         const isLoading = ref(false);
         const olMap = ref(null);
+
+        const vectorSource = ref(null);
+        const vectorLayer = ref(null);
+        const drawInteraction = ref(null);
+        const modifyInteraction = ref(null);
+        const selectInteraction = ref(null);
 
         // Map configuration
         const satelliteUrl = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
@@ -87,6 +94,23 @@ export default {
         const initMap = () => {
             if (olMap.value) return;
 
+            vectorSource.value = new VectorSource();
+
+            const vectorStyle = new Style({
+                fill: new Fill({
+                    color: 'rgba(255, 255, 255, 0.2)',
+                }),
+                stroke: new Stroke({
+                    color: '#6576ff',
+                    width: 2,
+                }),
+            });
+
+            vectorLayer.value = new VectorLayer({
+                source: vectorSource.value,
+                style: vectorStyle,
+            });
+
             const satelliteLayer = new TileLayer({
                 source: new XYZ({
                     url: satelliteUrl,
@@ -96,7 +120,7 @@ export default {
 
             const osmLayer = new TileLayer({
                 source: new OSM(),
-                opacity: 0.4, // Semi-przezroczysta warstwa
+                opacity: 0.4,
                 visible: showLabels.value,
             });
 
@@ -108,15 +132,34 @@ export default {
                 visible: showLabels.value,
             });
 
+            view.value = new View({
+                center: center.value,
+                zoom: zoom.value,
+                projection: projection.value,
+                rotation: rotation.value,
+            });
+
             olMap.value = new Map({
                 target: mapElement.value,
-                layers: [satelliteLayer, osmLayer],
-                view: new View({
-                    center: center.value,
-                    zoom: zoom.value,
-                    projection: projection.value,
+                layers: [satelliteLayer, osmLayer, labelsLayer, vectorLayer.value],
+                view: view.value,
+            });
+
+            selectInteraction.value = new Select({
+                condition: click,
+                style: new Style({
+                    fill: new Fill({
+                        color: 'rgba(101, 118, 255, 0.3)',
+                    }),
+                    stroke: new Stroke({
+                        color: '#6576ff',
+                        width: 3,
+                    }),
                 }),
             });
+
+            selectInteraction.value.on('select', featureSelected);
+            olMap.value.addInteraction(selectInteraction.value);
 
             watch(showLabels, (newValue) => {
                 labelsLayer.setVisible(newValue);
@@ -124,11 +167,25 @@ export default {
         };
 
         const resetMap = () => {
+            if (drawInteraction.value) {
+                olMap.value.removeInteraction(drawInteraction.value);
+                drawInteraction.value = null;
+            }
+
+            if (modifyInteraction.value) {
+                olMap.value.removeInteraction(modifyInteraction.value);
+                modifyInteraction.value = null;
+            }
+
             drawEnabled.value = false;
             modifyEnabled.value = false;
             highlightedFeatures.value = [];
             selectedFeatures.value.clear();
             currentFeature.value = null;
+
+            if (vectorSource.value) {
+                vectorSource.value.clear();
+            }
         };
 
         const saveField = () => {
@@ -205,13 +262,34 @@ export default {
                 }).then((result) => {
                     if (result.isConfirmed) {
                         resetMap();
-                        drawEnabled.value = true;
+                        startDrawing();
                     }
                 });
             } else {
                 resetMap();
-                drawEnabled.value = true;
+                startDrawing();
             }
+        };
+
+        const startDrawing = () => {
+            if (drawInteraction.value) {
+                olMap.value.removeInteraction(drawInteraction.value);
+            }
+
+            if (modifyInteraction.value) {
+                olMap.value.removeInteraction(modifyInteraction.value);
+            }
+
+            drawInteraction.value = new Draw({
+                source: vectorSource.value,
+                type: 'Polygon',
+            });
+
+            drawInteraction.value.on('drawstart', drawstart);
+            drawInteraction.value.on('drawend', drawend);
+
+            olMap.value.addInteraction(drawInteraction.value);
+            drawEnabled.value = true;
         };
 
         const drawstart = (event) => {
@@ -220,8 +298,17 @@ export default {
 
         const drawend = (event) => {
             drawEnabled.value = false;
+
+            olMap.value.removeInteraction(drawInteraction.value);
+
+            modifyInteraction.value = new Modify({
+                source: vectorSource.value,
+            });
+
+            modifyInteraction.value.on('modifyend', modifyend);
+            olMap.value.addInteraction(modifyInteraction.value);
+
             modifyEnabled.value = true;
-            selectedFeatures.value.push(event.feature);
             highlightedFeatures.value = [event.feature];
 
             // Try to estimate field size
@@ -256,6 +343,13 @@ export default {
             selectedFeatures.value = event.target.getFeatures();
         };
 
+        onBeforeUnmount(() => {
+            if (olMap.value) {
+                olMap.value.setTarget(null);
+                olMap.value = null;
+            }
+        });
+
         return {
             showModal,
             form,
@@ -279,7 +373,6 @@ export default {
             modifyend,
             featureSelected,
             satelliteUrl,
-            cropsOptions,
             showLabels,
         };
     },
@@ -407,7 +500,13 @@ export default {
                                 <div class="form-group">
                                     <label class="form-label" for="field-crops">Crops</label>
                                     <div class="form-control-wrap">
-                                        <Select2ajax id="field-crops" :form="form" field="crop_id" :url="route('crops.find')" />
+                                        <Select2ajax
+                                            id="field-crops"
+                                            :form="form"
+                                            field="crop_id"
+                                            :url="route('crops.find')"
+                                            class="select2-custom"
+                                        />
                                     </div>
                                     <div v-if="form.errors.crop_id" class="form-note text-danger">{{ form.errors.crop_id }}</div>
                                 </div>
@@ -449,8 +548,77 @@ export default {
     </div>
 </template>
 
-<style scoped>
+<style>
 .modal {
     background-color: rgba(0, 0, 0, 0.4);
+}
+
+/* Style dla Select2ajax */
+.select2-custom + .select2-container {
+    width: 100% !important;
+}
+
+.select2-custom + .select2-container .select2-selection--single {
+    height: 38px;
+    border: 1px solid #dbdfea;
+    border-radius: 4px;
+    background-color: #fff;
+}
+
+.select2-custom + .select2-container--default .select2-selection--single .select2-selection__rendered {
+    color: #526484;
+    line-height: 36px;
+    padding-left: 12px;
+}
+
+.select2-custom + .select2-container--default .select2-selection--single .select2-selection__arrow {
+    height: 36px;
+    right: 8px;
+}
+
+.select2-custom + .select2-container--default.select2-container--focus .select2-selection--single {
+    border-color: #6576ff;
+    outline: none;
+    box-shadow: 0 0 0 0.2rem rgba(101, 118, 255, 0.15);
+}
+
+/* Style dla dropdown i wyników */
+.select2-dropdown {
+    border: 1px solid #dbdfea;
+    border-radius: 4px;
+    box-shadow: 0 3px 12px rgba(43, 55, 72, 0.1);
+}
+
+.select2-container--default .select2-results__option--highlighted[aria-selected] {
+    background-color: #6576ff;
+    color: #fff;
+}
+
+.select2-container--default .select2-search--dropdown .select2-search__field {
+    border: 1px solid #dbdfea;
+    border-radius: 4px;
+    padding: 6px 10px;
+}
+
+/* Style dla wielokrotnego wyboru */
+.select2-custom + .select2-container .select2-selection--multiple {
+    min-height: 38px;
+    border: 1px solid #dbdfea;
+    border-radius: 4px;
+    background-color: #fff;
+}
+
+.select2-custom + .select2-container--default .select2-selection--multiple .select2-selection__choice {
+    background-color: #f5f6fa;
+    border: 1px solid #dbdfea;
+    border-radius: 3px;
+    padding: 2px 8px;
+    margin-top: 6px;
+    margin-right: 5px;
+}
+
+.select2-custom + .select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
+    color: #8094ae;
+    margin-right: 5px;
 }
 </style>
