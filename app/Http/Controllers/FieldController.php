@@ -6,6 +6,7 @@ use App\Enums\Statuses;
 use App\Models\Crop;
 use App\Models\Field;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -21,13 +22,12 @@ class FieldController extends Controller
             ->paginate(config('pagination.list'))
             ->withQueryString();
 
-        $crops = Crop::get();
-
         $statuses = array_column(Statuses::cases(), 'value');
 
         return Inertia::render('Field/Index', [
             'fields' => $field,
             'user' => auth()->user(),
+            'statuses' => $statuses,
         ]);
     }
 
@@ -44,7 +44,19 @@ class FieldController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $validate = $request->validate([
+            'name' => 'required|string',
+            'location' => 'nullable|string',
+            'size' => 'required|numeric',
+            'description' => 'nullable|string',
+            'boundaries' => 'required|array',
+            'status' => 'required|string',
+        ]);
+        $validate['user_id'] = Auth::id();
+
+        Field::create($validate);
+
+        return back()->with('success', 'Field created.');
     }
 
     /**
