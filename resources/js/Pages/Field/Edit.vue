@@ -1,26 +1,36 @@
 <template>
-    <div class="modal fade" :class="{ 'show d-block': showModal }" tabindex="-1" role="dialog" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-xl" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Add New Field</h5>
-                    <a href="#" class="close" @click.prevent="closeModal">
-                        <em class="icon ni ni-cross"></em>
-                    </a>
+    <div>
+        <div class="nk-block-head nk-block-head-sm">
+            <div class="nk-block-between">
+                <div class="nk-block-head-content">
+                    <h3 class="nk-block-title page-title">Edit Field</h3>
+                    <div class="nk-block-des text-soft">
+                        <Link href="/fields" class="btn btn-outline-primary btn-sm">
+                            <em class="icon ni ni-arrow-left me-1"></em>
+                            Back to Fields
+                        </Link>
+                    </div>
                 </div>
-                <div class="modal-body">
+            </div>
+        </div>
+
+        <div class="nk-block">
+            <div class="card">
+                <div class="card-inner">
+                    <button @click="testFunc">TEST</button>
                     <form @submit.prevent="saveField">
                         <div class="row g-4">
                             <div class="col-12">
                                 <div class="card">
                                     <div class="card-header">
-                                        <h5 class="card-title">Draw Field on Map</h5>
+                                        <h5 class="card-title">Edit Field Boundaries</h5>
                                     </div>
                                     <div class="card-body p-0">
                                         <FieldMap
-                                            mode="create"
+                                            mode="edit"
                                             height="500px"
-                                            v-model:boundaries="form.boundaries"
+                                            :boundaries="form.boundaries"
+                                            @update:boundaries="form.boundaries = $event"
                                             @area-calculated="updateFieldSize"
                                         />
                                     </div>
@@ -95,7 +105,7 @@
                                     <div class="form-control-wrap">
                                         <select class="form-select" id="field-status" v-model="form.status" required>
                                             <option v-for="status in statuses" :key="status" :value="status">
-                                                {{ status === 'active' ? 'Active' : status === 'inactive' ? 'Inactive' : status }}
+                                                {{ formatStatus(status) }}
                                             </option>
                                         </select>
                                     </div>
@@ -118,21 +128,25 @@
                                     <div v-if="form.errors.description" class="form-note text-danger">{{ form.errors.description }}</div>
                                 </div>
                             </div>
+
+                            <div class="col-12">
+                                <div class="form-group mt-4">
+                                    <div class="d-flex justify-content-end gap-2">
+                                        <Link :href="route('fields.show', field.id)" class="btn btn-outline-secondary p-3">Cancel</Link>
+                                        <button
+                                            type="submit"
+                                            class="btn btn-primary p-3"
+                                            :disabled="isLoading || !form.name || !form.size || !form.boundaries"
+                                        >
+                                            <div v-if="isLoading" class="spinner-border spinner-border-sm me-1" role="status"></div>
+                                            <em v-else class="icon ni ni-save me-1"></em>
+                                            <span>Update Field</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </form>
-                </div>
-                <div class="modal-footer bg-light">
-                    <button type="button" class="btn btn-outline-secondary" @click="closeModal">Cancel</button>
-                    <button
-                        type="button"
-                        class="btn btn-primary"
-                        @click="saveField"
-                        :disabled="isLoading || !form.name || !form.size || !form.boundaries"
-                    >
-                        <div v-if="isLoading" class="spinner-border spinner-border-sm me-1" role="status"></div>
-                        <em v-else class="icon ni ni-save me-1"></em>
-                        <span>Save Field</span>
-                    </button>
                 </div>
             </div>
         </div>
@@ -140,59 +154,59 @@
 </template>
 
 <script>
-import { useForm } from '@inertiajs/vue3';
-import { ref } from 'vue';
-import { router } from '@inertiajs/vue3';
+import { useForm, Link } from '@inertiajs/vue3';
+import { onMounted, ref } from 'vue';
 import { FieldStatus } from '@/Enum';
 import Swal from 'sweetalert2';
 import FieldMap from '@/Components/FieldMap.vue';
+import AppLayout from '@/Layouts/AppLayout.vue';
 
 export default {
+    layout: AppLayout,
     components: {
         FieldMap,
+        Link,
     },
     props: {
-        crops: {
-            type: Array,
-            default: () => [],
+        field: {
+            type: Object,
+            required: true,
         },
         statuses: {
             type: Array,
             default: () => [],
         },
     },
-    setup(props, { emit }) {
-        const showModal = ref(false);
+    setup(props) {
         const isLoading = ref(false);
 
         const form = useForm({
-            name: null,
-            location: null,
-            size: null,
-            description: null,
-            boundaries: null,
-            status: FieldStatus.Active,
-            crop_id: [],
+            id: props.field.id,
+            name: props.field.name,
+            location: props.field.location,
+            size: props.field.size,
+            description: props.field.description,
+            boundaries: props.field.boundaries,
+            status: props.field.status || FieldStatus.Active,
+            crop_id: props.field.crop_id || [],
+            _method: 'PUT', // Laravel method spoofing
         });
-
-        const openModal = () => {
-            showModal.value = true;
-        };
-
-        const closeModal = () => {
-            showModal.value = false;
-            form.reset();
-        };
 
         const updateFieldSize = (area) => {
             form.size = area;
         };
 
+        const formatStatus = (status) => {
+            if (status === 'active') return 'Active';
+            if (status === 'inactive') return 'Inactive';
+            return status.charAt(0).toUpperCase() + status.slice(1);
+        };
+
         const saveField = () => {
             if (!form.boundaries) {
                 Swal.fire({
-                    title: 'No Field Drawn',
-                    text: 'Please draw a field on the map before saving.',
+                    title: 'No Field Boundaries',
+                    text: 'Please ensure the field has valid boundaries.',
                     icon: 'warning',
                     confirmButtonText: 'OK',
                 });
@@ -201,19 +215,17 @@ export default {
 
             isLoading.value = true;
 
-            form.post(route('fields.store'), {
+            form.post(route('fields.update', props.field.id), {
                 preserveScroll: true,
                 onSuccess: () => {
-                    closeModal();
-
                     Swal.fire({
-                        title: 'Field Created',
-                        text: 'The field has been created successfully.',
+                        title: 'Field Updated',
+                        text: 'The field has been updated successfully.',
                         icon: 'success',
                         confirmButtonText: 'OK',
+                    }).then(() => {
+                        window.location.href = route('fields.show', props.field.id);
                     });
-
-                    emit('field-created');
                 },
                 onError: () => {
                     isLoading.value = false;
@@ -224,21 +236,20 @@ export default {
             });
         };
 
+        const testFunc = () => {
+            console.log('Form status:', form.status);
+            console.log('Field data:', props.field);
+            console.log('Available statuses:', props.statuses);
+        };
+
         return {
-            showModal,
             form,
-            openModal,
-            closeModal,
             saveField,
             updateFieldSize,
             isLoading,
+            testFunc,
+            formatStatus,
         };
     },
 };
 </script>
-
-<style>
-.modal {
-    background-color: rgba(0, 0, 0, 0.4);
-}
-</style>
