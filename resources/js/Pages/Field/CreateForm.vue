@@ -20,6 +20,7 @@ import VectorSource from 'ol/source/Vector';
 import VectorLayer from 'ol/layer/Vector';
 import { Fill, Stroke, Style } from 'ol/style';
 import { click, pointerMove } from 'ol/events/condition';
+import { fromLonLat, toLonLat } from 'ol/proj';
 
 export default {
     components: {
@@ -225,7 +226,11 @@ export default {
 
             const feature = highlightedFeatures.value[0];
             const geometry = feature.getGeometry();
-            form.boundaries = geometry.getCoordinates()[0];
+
+            const mercatorCoords = geometry.getCoordinates()[0];
+            const wgs84Coords = mercatorCoords.map((coord) => toLonLat(coord));
+
+            form.boundaries = wgs84Coords;
 
             form.post(route('fields.store'), {
                 preserveScroll: true,
@@ -496,21 +501,21 @@ export default {
                                 </div>
                             </div>
 
-                            <div class="col-12">
-                                <div class="form-group">
-                                    <label class="form-label" for="field-crops">Crops</label>
-                                    <div class="form-control-wrap">
-                                        <Select2ajax
-                                            id="field-crops"
-                                            :form="form"
-                                            field="crop_id"
-                                            :url="route('crops.find')"
-                                            class="select2-custom"
-                                        />
-                                    </div>
-                                    <div v-if="form.errors.crop_id" class="form-note text-danger">{{ form.errors.crop_id }}</div>
-                                </div>
-                            </div>
+                            <!--                            <div class="col-12">-->
+                            <!--                                <div class="form-group">-->
+                            <!--                                    <label class="form-label" for="field-crops">Crops</label>-->
+                            <!--                                    <div class="form-control-wrap">-->
+                            <!--                                        <Select2ajax-->
+                            <!--                                            id="field-crops"-->
+                            <!--                                            :form="form"-->
+                            <!--                                            field="crop_id"-->
+                            <!--                                            :url="route('crops.find')"-->
+                            <!--                                            class="select2-custom"-->
+                            <!--                                        />-->
+                            <!--                                    </div>-->
+                            <!--                                    <div v-if="form.errors.crop_id" class="form-note text-danger">{{ form.errors.crop_id }}</div>-->
+                            <!--                                </div>-->
+                            <!--                            </div>-->
 
                             <div class="col-12">
                                 <div class="form-group">
