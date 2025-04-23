@@ -6,6 +6,7 @@ import 'bootstrap';
 
 import OpenLayersMap from 'vue3-openlayers';
 import 'vue3-openlayers/styles.css';
+import VChart from 'vue-echarts';
 
 createInertiaApp({
     title: (title) => `${title} - RolSys`,
@@ -18,6 +19,7 @@ createInertiaApp({
         return createApp({ render: () => h(App, props) })
             .use(plugin)
             .use(OpenLayersMap)
+            .component('v-chart', VChart)
             .mixin({ methods: { route } })
             .mount(el);
     },
