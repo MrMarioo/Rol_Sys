@@ -4,6 +4,8 @@ use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
+use App\Http\Controllers\FieldDataController;
+
 Route::middleware('guest')->group(function () {
     Route::get('login', function () {
         return Inertia::render('Auth/Login');
@@ -38,11 +40,19 @@ Route::middleware(['auth'])->group(function () {
             Route::get('find', 'find')->name('find');
         });
 
-    //    Route::get('/field-data', [FieldDataController::class, 'index'])->name('field-data.index');
-    //    Route::get('/field-data/{field}', [FieldDataController::class, 'show'])->name('field-data.show');
-    //    Route::post('/field-data/import', [FieldDataController::class, 'import'])->name('field-data.import');
-    //    Route::get('/field-data/{field}/export', [FieldDataController::class, 'export'])->name('field-data.export');
-    //
+    Route::name('field-data.')
+        ->prefix('field-data')
+        ->controller(FieldDataController::class)
+        ->group(function () {
+            Route::get('/', 'index')->name('index');
+            Route::get('/create', 'create')->name('create');
+            Route::post('/', 'store')->name('fstore');
+            Route::get('/{fieldData}', 'show')->name('show');
+            Route::get('/{fieldData}/edit', 'edit')->name('edit');
+            Route::put('/{fieldData}', 'update')->name('update');
+            Route::delete('/{fieldData}', 'destroy')->name('destroy');
+        });
+
     //    Route::get('/analytics', [AnalyticsController::class, 'index'])->name('analytics.index');
     //    Route::get('/analytics/{field}', [AnalyticsController::class, 'fieldAnalysis'])->name('analytics.field');
     //    Route::post('/analytics/predict', [AnalyticsController::class, 'predict'])->name('analytics.predict');
