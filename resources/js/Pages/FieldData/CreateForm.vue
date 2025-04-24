@@ -27,6 +27,7 @@
     <div class="nk-block">
         <div class="card card-bordered">
             <div class="card-inner">
+                <!-- Używamy zwykłego formularza HTML zamiast reactivity z Inertia -->
                 <form @submit.prevent="submitForm">
                     <div class="row g-4">
                         <div class="col-lg-6">
@@ -35,9 +36,9 @@
                                 <div class="form-control-wrap">
                                     <select
                                         id="field-select"
-                                        v-model="form.field_id"
+                                        v-model="fieldId"
                                         class="form-select"
-                                        :class="{ error: form.errors.field_id }"
+                                        :class="{ error: errors.field_id }"
                                         required
                                     >
                                         <option value="">Select field</option>
@@ -45,7 +46,7 @@
                                             {{ field.name }}
                                         </option>
                                     </select>
-                                    <div v-if="form.errors.field_id" class="form-error">{{ form.errors.field_id }}</div>
+                                    <div v-if="errors.field_id" class="form-error">{{ errors.field_id }}</div>
                                 </div>
                             </div>
                         </div>
@@ -56,12 +57,12 @@
                                     <input
                                         type="date"
                                         id="collection-date"
-                                        v-model="form.collection_date"
+                                        v-model="collectionDate"
                                         class="form-control"
-                                        :class="{ error: form.errors.collection_date }"
+                                        :class="{ error: errors.collection_date }"
                                         required
                                     />
-                                    <div v-if="form.errors.collection_date" class="form-error">{{ form.errors.collection_date }}</div>
+                                    <div v-if="errors.collection_date" class="form-error">{{ errors.collection_date }}</div>
                                 </div>
                             </div>
                         </div>
@@ -71,9 +72,9 @@
                                 <div class="form-control-wrap">
                                     <select
                                         id="data-type"
-                                        v-model="form.data_type"
+                                        v-model="dataType"
                                         class="form-select"
-                                        :class="{ error: form.errors.data_type }"
+                                        :class="{ error: errors.data_type }"
                                         required
                                     >
                                         <option value="">Select data type</option>
@@ -85,7 +86,7 @@
                                         <option value="crop_health">Crop Health</option>
                                         <option value="other">Other</option>
                                     </select>
-                                    <div v-if="form.errors.data_type" class="form-error">{{ form.errors.data_type }}</div>
+                                    <div v-if="errors.data_type" class="form-error">{{ errors.data_type }}</div>
                                 </div>
                             </div>
                         </div>
@@ -99,11 +100,11 @@
                                                 type="number"
                                                 step="0.0000001"
                                                 placeholder="Latitude"
-                                                v-model="form.latitude"
+                                                v-model="latitude"
                                                 class="form-control"
-                                                :class="{ error: form.errors.latitude }"
+                                                :class="{ error: errors.latitude }"
                                             />
-                                            <div v-if="form.errors.latitude" class="form-error">{{ form.errors.latitude }}</div>
+                                            <div v-if="errors.latitude" class="form-error">{{ errors.latitude }}</div>
                                         </div>
                                     </div>
                                     <div class="col-sm-6">
@@ -112,11 +113,11 @@
                                                 type="number"
                                                 step="0.0000001"
                                                 placeholder="Longitude"
-                                                v-model="form.longitude"
+                                                v-model="longitude"
                                                 class="form-control"
-                                                :class="{ error: form.errors.longitude }"
+                                                :class="{ error: errors.longitude }"
                                             />
-                                            <div v-if="form.errors.longitude" class="form-error">{{ form.errors.longitude }}</div>
+                                            <div v-if="errors.longitude" class="form-error">{{ errors.longitude }}</div>
                                         </div>
                                     </div>
                                 </div>
@@ -142,13 +143,12 @@
                                     <textarea
                                         v-model="dataInput"
                                         class="form-control code-textarea"
-                                        :class="{ error: form.errors.data }"
+                                        :class="{ error: jsonError || errors.data_json }"
                                         rows="10"
                                         placeholder="Enter data in JSON format"
-                                        @input="validateJsonInput"
                                         required
                                     ></textarea>
-                                    <div v-if="form.errors.data" class="form-error">{{ form.errors.data }}</div>
+                                    <div v-if="errors.data_json" class="form-error">{{ errors.data_json }}</div>
                                     <div v-if="jsonError" class="form-error mt-1">{{ jsonError }}</div>
                                 </div>
                             </div>
@@ -161,12 +161,11 @@
                                     <textarea
                                         v-model="metadataInput"
                                         class="form-control code-textarea"
-                                        :class="{ error: form.errors.metadata }"
+                                        :class="{ error: metadataError || errors.metadata_json }"
                                         rows="6"
                                         placeholder="Enter metadata in JSON format (optional)"
-                                        @input="validateMetadataInput"
                                     ></textarea>
-                                    <div v-if="form.errors.metadata" class="form-error">{{ form.errors.metadata }}</div>
+                                    <div v-if="errors.metadata_json" class="form-error">{{ errors.metadata_json }}</div>
                                     <div v-if="metadataError" class="form-error mt-1">{{ metadataError }}</div>
                                 </div>
                             </div>
@@ -174,8 +173,8 @@
 
                         <div class="col-12">
                             <div class="form-group">
-                                <button type="submit" class="btn btn-primary" :disabled="form.processing || jsonError || metadataError">
-                                    <span v-if="form.processing">Saving...</span>
+                                <button type="submit" class="btn btn-primary" >
+                                    <span v-if="processing">Saving...</span>
                                     <span v-else>Save Data</span>
                                 </button>
                             </div>
@@ -189,37 +188,31 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue';
-import { Link, useForm } from '@inertiajs/vue3';
+import { Link, router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 
 defineOptions({
     layout: AppLayout,
 });
-// Props definition
+
 const props = defineProps({
     fields: Array,
+    errors: Object
 });
 
-// Form state
-const form = useForm({
-    field_id: '',
-    collection_date: new Date().toISOString().split('T')[0], // Today's date
-    data_type: '',
-    data: {},
-    latitude: null,
-    longitude: null,
-    metadata: null,
-});
-
-// Component state
+const fieldId = ref('');
+const dataType = ref('');
+const collectionDate = ref(new Date().toISOString().split('T')[0]); // Today's date
+const latitude = ref(null);
+const longitude = ref(null);
 const dataInput = ref('');
 const metadataInput = ref('');
 const jsonError = ref('');
 const metadataError = ref('');
+const processing = ref(false);
 
-// Data format description based on selected type
 const dataFormatDescription = computed(() => {
-    switch (form.data_type) {
+    switch (dataType.value) {
         case 'soil_moisture':
             return 'Format: Time series with moisture readings';
         case 'ndvi':
@@ -237,43 +230,14 @@ const dataFormatDescription = computed(() => {
     }
 });
 
-// JSON data validation
-const validateJsonInput = () => {
-    if (!dataInput.value.trim()) {
-        jsonError.value = '';
-        form.data = {};
-        return;
-    }
-
-    try {
-        form.data = JSON.parse(dataInput.value);
-        jsonError.value = '';
-    } catch (e) {
-        jsonError.value = 'Invalid JSON format';
-    }
-};
-
-// JSON metadata validation
-const validateMetadataInput = () => {
-    if (!metadataInput.value.trim()) {
-        metadataError.value = '';
-        form.metadata = null;
-        return;
-    }
-
-    try {
-        form.metadata = JSON.parse(metadataInput.value);
-        metadataError.value = '';
-    } catch (e) {
-        metadataError.value = 'Invalid JSON format';
-    }
-};
-
-// Generate sample data based on data type
 const generateSampleData = () => {
+    if (!dataType.value) {
+        return;
+    }
+
     let sampleData = {};
 
-    switch (form.data_type) {
+    switch (dataType.value) {
         case 'soil_moisture':
             sampleData = {
                 readings: [
@@ -281,7 +245,7 @@ const generateSampleData = () => {
                     { timestamp: new Date(Date.now() - 3600000).toISOString(), value: 34.8, depth: 10 },
                     { timestamp: new Date(Date.now() - 7200000).toISOString(), value: 34.5, depth: 10 },
                 ],
-                unit: 'percent',
+                unit: "percent",
                 average: 34.83,
             };
             break;
@@ -305,27 +269,27 @@ const generateSampleData = () => {
                     { timestamp: new Date(Date.now() - 3600000).toISOString(), temperature: 21.8 },
                     { timestamp: new Date(Date.now() - 7200000).toISOString(), temperature: 21.2 },
                 ],
-                unit: 'celsius',
+                unit: "celsius",
                 average: 21.83,
             };
             break;
         case 'pest_detection':
             sampleData = {
                 detections: [
-                    { type: 'aphid', count: 15, severity: 'medium', location: [51.123, 19.456] },
-                    { type: 'beetle', count: 3, severity: 'low', location: [51.124, 19.457] },
+                    { type: "aphid", count: 15, severity: "medium", location: [51.123, 19.456] },
+                    { type: "beetle", count: 3, severity: "low", location: [51.124, 19.457] },
                 ],
                 summary: {
                     total_count: 18,
-                    highest_severity: 'medium',
+                    highest_severity: "medium",
                 },
             };
             break;
         case 'weed_detection':
             sampleData = {
                 detections: [
-                    { type: 'thistle', coverage: 0.05, location: [51.123, 19.456] },
-                    { type: 'nettle', coverage: 0.03, location: [51.124, 19.457] },
+                    { type: "thistle", coverage: 0.05, location: [51.123, 19.456] },
+                    { type: "nettle", coverage: 0.03, location: [51.124, 19.457] },
                 ],
                 total_coverage: 0.08,
             };
@@ -334,40 +298,79 @@ const generateSampleData = () => {
             sampleData = {
                 health_index: 0.82,
                 areas: [
-                    { location: [51.123, 19.456], index: 0.78, issue: 'chlorosis' },
+                    { location: [51.123, 19.456], index: 0.78, issue: "chlorosis" },
                     { location: [51.124, 19.457], index: 0.85, issue: null },
                 ],
             };
             break;
         default:
-            sampleData = { value: 'Sample data', timestamp: new Date().toISOString() };
+            sampleData = { value: "Sample data", timestamp: new Date().toISOString() };
             break;
     }
 
     dataInput.value = JSON.stringify(sampleData, null, 4);
-    validateJsonInput();
+    jsonError.value = '';
 };
 
-// Watch for changes in data type
+const validateJson = (jsonString) => {
+    if (!jsonString || !jsonString.trim()) {
+        return { valid: false, error: 'JSON data is required' };
+    }
+
+    try {
+        const parsed = JSON.parse(jsonString);
+        return { valid: true, data: parsed };
+    } catch (e) {
+        return { valid: false, error: 'Invalid JSON format' };
+    }
+};
+
 watch(
-    () => form.data_type,
-    () => {
-        if (form.data_type && (!dataInput.value || jsonError.value)) {
+    () => dataType.value,
+    (newValue) => {
+        if (newValue && (!dataInput.value || jsonError.value)) {
             generateSampleData();
         }
     }
 );
 
-// Submit form handler
 const submitForm = () => {
-    validateJsonInput();
-    validateMetadataInput();
+    jsonError.value = '';
+    metadataError.value = '';
 
-    if (jsonError.value || metadataError.value) {
+    const dataValidation = validateJson(dataInput.value);
+    if (!dataValidation.valid) {
+        jsonError.value = dataValidation.error;
         return;
     }
 
-    form.post(route('field-data.store'));
+    let metadata = null;
+    if (metadataInput.value.trim()) {
+        const metadataValidation = validateJson(metadataInput.value);
+        if (!metadataValidation.valid) {
+            metadataError.value = metadataValidation.error;
+            return;
+        }
+        metadata = metadataValidation.data;
+    }
+
+    processing.value = true;
+
+    const formData = {
+        field_id: fieldId.value,
+        collection_date: collectionDate.value,
+        data_type: dataType.value,
+        latitude: latitude.value,
+        longitude: longitude.value,
+        data_json: dataInput.value,
+        metadata_json: metadataInput.value || null
+    };
+
+    router.post(route('field-data.store'), formData, {
+        onFinish: () => {
+            processing.value = false;
+        }
+    });
 };
 </script>
 

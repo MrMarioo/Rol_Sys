@@ -57,21 +57,28 @@ class FieldDataController extends Controller
             'field_id' => 'required|exists:fields,id',
             'collection_date' => 'required|date',
             'data_type' => 'required|string|max:255',
-            'data' => 'required|array',
+            'data_json' => 'required|json',
+            'metadata_json' => 'nullable|json',
             'latitude' => 'nullable|numeric',
             'longitude' => 'nullable|numeric',
-            'metadata' => 'nullable|array',
         ]);
 
-        $field = Field::where('id', $validated['field_id'])
-            ->where('user_id', Auth::id())
-            ->firstOrFail();
+        $data = json_decode($validated['data_json'], true);
+        $metadata = !empty($validated['metadata_json']) ? json_decode($validated['metadata_json'], true) : null;
 
-        FieldData::create($validated);
+        $fieldData = new FieldData([
+            'field_id' => $validated['field_id'],
+            'collection_date' => $validated['collection_date'],
+            'data_type' => $validated['data_type'],
+            'latitude' => $validated['latitude'],
+            'longitude' => $validated['longitude'],
+            'data' => $data,
+            'metadata' => $metadata,
+        ]);
 
-        return redirect()
-            ->route('field-data.index')
-            ->with('success', 'Field data was added.');
+        $fieldData->save();
+
+        return redirect()->route('field-data.index')->with('success', 'Field data added successfully');
     }
     public function show(FieldData $fieldData)
     {

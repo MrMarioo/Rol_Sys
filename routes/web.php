@@ -46,7 +46,7 @@ Route::middleware(['auth'])->group(function () {
         ->group(function () {
             Route::get('/', 'index')->name('index');
             Route::get('/create', 'create')->name('create');
-            Route::post('/', 'store')->name('fstore');
+            Route::post('/', 'store')->name('store');
             Route::get('/{fieldData}', 'show')->name('show');
             Route::get('/{fieldData}/edit', 'edit')->name('edit');
             Route::put('/{fieldData}', 'update')->name('update');
