@@ -52,11 +52,17 @@ Route::middleware(['auth'])->group(function () {
             Route::put('/{fieldData}', 'update')->name('update');
             Route::delete('/{fieldData}', 'destroy')->name('destroy');
         });
+    Route::name('analytics.')
+        ->prefix('analytics')
+        ->controller(\App\Http\Controllers\AnalitycsController::class)
+        ->group(function () {
+            Route::get('/', 'index')->name('index');
+            Route::post('/{field}', 'analyze')->name('analyze');
+            Route::get('/{analytics}', 'show')->name('show');
+            Route::get('/{analytics}/download', 'download')->name('download');
+            Route::delete('/{analytics}',  'destroy')->name('destroy');
+        });
 
-    //    Route::get('/analytics', [AnalyticsController::class, 'index'])->name('analytics.index');
-    //    Route::get('/analytics/{field}', [AnalyticsController::class, 'fieldAnalysis'])->name('analytics.field');
-    //    Route::post('/analytics/predict', [AnalyticsController::class, 'predict'])->name('analytics.predict');
-    //
     //    Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
     //    Route::get('/reports/create', [ReportController::class, 'create'])->name('reports.create');
     //    Route::post('/reports', [ReportController::class, 'store'])->name('reports.store');
