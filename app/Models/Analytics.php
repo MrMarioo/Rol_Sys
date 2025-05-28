@@ -23,6 +23,7 @@ class Analytics extends Model
         'analysis_date' => 'date',
         'results' => 'array',
         'parameters' => 'array',
+        'recommendations' => 'array',
     ];
     public function field(): BelongsTo
     {
