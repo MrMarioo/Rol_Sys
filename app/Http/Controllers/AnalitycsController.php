@@ -125,28 +125,35 @@ class AnalitycsController extends Controller
 
             $results = $response->json();
 
-            // Zapisz wyniki analizy
             $analytics = new Analytics([
                 'field_id' => $field->id,
-                'analysis_type' => 'comprehensive',
+                'analysis_type' => 'ndvi_test',
                 'analysis_date' => now(),
                 'results' => $results,
                 'recommendations' => $results['recommendations'] ?? null,
-                'parameters' => [
+                'parameters' => json_encode([
                     'sensitivity' => $validated['sensitivity'] ?? 'medium',
                     'data_count' => count($formattedData),
+                    'test_mode' => 'ndvi_only',
                     'date_range' => [
                         'from' => $request->start_date,
                         'to' => $request->end_date
                     ]
-                ]
+                ])
             ]);
 
             $analytics->save();
 
             return Inertia::render('Analytics/Results', [
                 'field' => $field,
-                'results' => $results
+                'analytics' => [
+                    'id' => $analytics->id,
+                    'analysis_date' => $analytics->analysis_date->format('Y-m-d'),
+                    'analysis_type' => $analytics->analysis_type,
+                    'results' => $analytics->results,
+                    'recommendations' => $analytics->recommendations,
+                    'parameters' => $analytics->parameters
+                ]
             ]);
 
         } catch (\Exception $e) {

@@ -1,7 +1,6 @@
 import numpy as np
 from sklearn.ensemble import IsolationForest
 import pandas as pd
-import json
 
 
 def detect_anomalies(field_data, sensitivity='medium'):
@@ -23,11 +22,8 @@ def detect_anomalies(field_data, sensitivity='medium'):
         data_type = item.get('data_type')
         data = item.get('data', {})
 
-        if isinstance(data, str):
-            try:
-                data = json.loads(data)
-            except:
-                continue
+        # Data już jest dict z Laravel - NIE dekoduj JSON!
+        # Usuń: if isinstance(data, str): try: data = json.loads(data)
 
         row = {
             'date': item.get('collection_date'),

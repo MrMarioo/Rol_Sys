@@ -32,9 +32,15 @@ def analyze_field(field_id):
         field_data = data.get('field_data', [])
         parameters = data.get('parameters', {})
 
+        logger.info(f"Analyzing field {field_id}")
+        logger.info(f"Received {len(field_data)} data points")
+        logger.info(f"Data types: {[item.get('data_type') for item in field_data[:3]]}")
+
         # Process different data types
         ndvi_data = [item for item in field_data if item.get('data_type') == 'ndvi']
         moisture_data = [item for item in field_data if item.get('data_type') == 'soil_moisture']
+
+        logger.info(f"NDVI records: {len(ndvi_data)}, Moisture records: {len(moisture_data)}")
 
         # Run analysis
         vegetation_analysis = analyze_ndvi(ndvi_data) if ndvi_data else None
@@ -53,10 +59,14 @@ def analyze_field(field_id):
             'recommendations': recommendations
         }
 
+        logger.info("Analysis completed successfully")
         return jsonify(response)
 
     except Exception as e:
         logger.error(f"Analysis error: {str(e)}")
+        logger.error(f"Error type: {type(e).__name__}")
+        import traceback
+        logger.error(f"Traceback: {traceback.format_exc()}")
         return jsonify({"error": str(e)}), 500
 
 

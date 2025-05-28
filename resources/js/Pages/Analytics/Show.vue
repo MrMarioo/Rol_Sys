@@ -80,7 +80,7 @@ export default {
         </div>
 
         <!-- Analysis Results -->
-        <div v-if="analytics.results" class="card mb-4">
+        <div v-if="analytics.results" class="card mb-20">
             <!-- Soil Moisture Analysis -->
             <div v-if="analytics.results.soil_moisture" class="card-inner border-bottom">
                 <h6 class="overline-title">Soil Moisture Analysis</h6>
@@ -287,8 +287,7 @@ export default {
             </div>
         </div>
 
-        <!-- Actions -->
-        <div class="gap g-3">
+        <div class="flex-row gap-4">
             <Link :href="`/analytics`" class="btn btn-outline-primary">
                 <em class="icon ni ni-arrow-left"></em>
                 <span>Back to Analytics</span>

@@ -9,8 +9,8 @@ def analyze_ndvi(ndvi_data):
     ndvi_values = []
     for item in ndvi_data:
         data = item.get('data', {})
-        if isinstance(data, str):
-            data = json.loads(data)
+        #if isinstance(data, str):
+        #    data = json.loads(data)
 
         values = data.get('ndvi_values', [])
         ndvi_values.extend(values)
