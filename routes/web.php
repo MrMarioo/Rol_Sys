@@ -63,11 +63,20 @@ Route::middleware(['auth'])->group(function () {
             Route::delete('/{analytics}',  'destroy')->name('destroy');
         });
 
-    //    Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
-    //    Route::get('/reports/create', [ReportController::class, 'create'])->name('reports.create');
-    //    Route::post('/reports', [ReportController::class, 'store'])->name('reports.store');
-    //    Route::get('/reports/{report}', [ReportController::class, 'show'])->name('reports.show');
-    //    Route::get('/reports/{report}/download', [ReportController::class, 'download'])->name('reports.download');
+    Route::name('reports.')
+        ->prefix('reports')
+        ->controller(\App\Http\Controllers\ReportController::class)
+        ->group(function () {
+            Route::get('/', 'index')->name('index');
+            Route::get('/create', 'create')->name('create');
+            Route::post('/', 'store')->name('store');
+            Route::get('/{report}', 'show')->name('show');
+            Route::get('/{report}/edit', 'edit')->name('edit');
+            Route::put('/{report}', 'update')->name('update');
+            Route::post('/{report}/generate', 'generate')->name('generate');
+            Route::get('/{report}/download', 'download')->name('download');
+            Route::delete('/{report}', 'destroy')->name('destroy');
+        });
     //
     //    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
     //    Route::patch('/notifications/{id}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
