@@ -70,6 +70,8 @@ class AnalitycsController extends Controller
             'start_date' => 'nullable|date',
             'end_date' => 'nullable|date',
             'sensitivity' => 'nullable|string|in:low,medium,high',
+            'include_growth_prediction' => 'nullable|boolean',
+            'prediction_days' => 'nullable|integer|min:1|max:30',
         ]);
 
         $query = FieldData::where("field_id", $field->id);
@@ -82,10 +84,9 @@ class AnalitycsController extends Controller
             $query->where('collection_date', '<=', $request->end_date);
         }
 
-        $fieldData = $query->get();
+        $fieldData = $query->orderBy('collection_date', 'desc')->get();
 
         try {
-
             $formattedData = $fieldData->map(function($item) {
                 $dataArray = is_string($item->data) ? json_decode($item->data, true) : $item->data;
                 $metadataArray = is_string($item->metadata) ? json_decode($item->metadata, true) : $item->metadata;
@@ -102,19 +103,37 @@ class AnalitycsController extends Controller
                 ];
             })->toArray();
 
+            // Informacje o polu i uprawie dla predykcji
+            $activeCrop = $field->crops()
+                ->wherePivot('status', 'active')
+                ->whereNull('actual_harvest_date')
+                ->first();
+
+            $fieldInfo = [
+                'size' => $field->size,
+                'planting_date' => $activeCrop?->pivot->planting_date,
+                'crop_type' => $activeCrop?->name,
+            ];
+
             logger()->info("Data being sent to AI:", [
                 'count' => count($formattedData),
                 'types' => collect($formattedData)->pluck('data_type')->unique()->toArray(),
-                'sample_ndvi' => collect($formattedData)->where('data_type', 'ndvi')->first(),
-                'sample_moisture' => collect($formattedData)->where('data_type', 'soil_moisture')->first()
+                'include_prediction' => $validated['include_growth_prediction'] ?? false,
+                'field_info' => $fieldInfo
             ]);
 
-            $response = Http::post("http://ai-service:5000/analyze/field/{$field->id}", [
+            // Wysłanie danych do AI - teraz z opcjonalną predykcją
+            $aiPayload = [
                 'field_data' => $formattedData,
+                'field_info' => $fieldInfo,
                 'parameters' => [
-                    'sensitivity' => $validated['sensitivity'] ?? 'medium'
+                    'sensitivity' => $validated['sensitivity'] ?? 'medium',
+                    'include_growth_prediction' => $validated['include_growth_prediction'] ?? false,
+                    'prediction_days' => $validated['prediction_days'] ?? 7
                 ]
-            ]);
+            ];
+
+            $response = Http::timeout(60)->post("http://ai-service:5000/analyze/field/{$field->id}", $aiPayload);
 
             logger()->info("AI Response Status: " . $response->status());
 
@@ -127,25 +146,27 @@ class AnalitycsController extends Controller
 
             $analytics = new Analytics([
                 'field_id' => $field->id,
-                'analysis_type' => 'ndvi_test',
+                'analysis_type' => $validated['include_growth_prediction'] ? 'comprehensive_with_prediction' : 'standard_analysis',
                 'analysis_date' => now(),
                 'results' => $results,
                 'recommendations' => $results['recommendations'] ?? null,
-                'parameters' => json_encode([
+                'parameters' => [
                     'sensitivity' => $validated['sensitivity'] ?? 'medium',
                     'data_count' => count($formattedData),
-                    'test_mode' => 'ndvi_only',
+                    'include_prediction' => $validated['include_growth_prediction'] ?? false,
+                    'prediction_days' => $validated['prediction_days'] ?? 7,
                     'date_range' => [
                         'from' => $request->start_date,
                         'to' => $request->end_date
                     ]
-                ])
+                ]
             ]);
 
             $analytics->save();
 
-            return Inertia::render('Analytics/Results', [
+            return Inertia::render('Analytics/Show', [
                 'field' => $field,
+                'activeCrop' => $activeCrop,
                 'analytics' => [
                     'id' => $analytics->id,
                     'analysis_date' => $analytics->analysis_date->format('Y-m-d'),

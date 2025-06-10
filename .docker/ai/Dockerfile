@@ -20,7 +20,11 @@ seaborn==0.12.2\n\
 pymysql==1.1.0\n\
 sqlalchemy==2.0.19\n\
 gunicorn==21.2.0\n\
-opencv-python-headless==4.8.0.76" > /app/requirements.txt
+opencv-python-headless==4.8.0.76\n\
+scipy==1.11.1\n\
+joblib==1.3.2\n\
+psutil==5.9.5\n\
+requests==2.31.0" > /app/requirements.txt
 
 RUN pip install --no-cache-dir -r /app/requirements.txt
 

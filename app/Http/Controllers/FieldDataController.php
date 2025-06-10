@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
+use App\Jobs\AnalyzeFieldDataJob;
 
 class FieldDataController extends Controller
 {
@@ -127,5 +128,86 @@ class FieldDataController extends Controller
         return redirect()
             ->route('field-data.index')
             ->with('success', 'Field Data was deleted.');
+    }
+
+      /****************************/
+     // API FOR EXTERNAL DEVICES //
+    /****************************/
+    public function apiStore(Request $request)
+    {
+        $validated = $request->validate([
+            'field_id' => 'required|exists:fields,id',
+            'collection_date' => 'required|date',
+            'data_type' => 'required|in:ndvi,soil_moisture',
+            'data.ndvi_values' => 'required_if:data_type,ndvi|array|size:100',
+            'data.ndvi_values.*' => 'numeric|between:0,1',
+            'data.moisture_values' => 'required_if:data_type,soil_moisture|array|size:100',
+            'data.moisture_values.*' => 'numeric|between:0,1',
+            'latitude' => 'required|numeric|between:-90,90',
+            'longitude' => 'required|numeric|between:-180,180',
+            'metadata' => 'required|array',
+            'metadata.device' => 'required|string',
+            'metadata.camera' => 'string',
+            'metadata.height' => 'numeric|min:0',
+            'metadata.weather' => 'array'
+        ]);
+
+        $fieldData = FieldData::create($validated);
+
+        AnalyzeFieldDataJob::dispatch($fieldData);
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $fieldData,
+            'message' => 'Field data stored and analysis queued'
+        ], 201);
+    }
+
+    public function droneStore(Request $request)
+    {
+        $validated = $request->validate([
+            'field_id' => 'required|exists:fields,id',
+            'collection_date' => 'required|date',
+            'data_type' => 'required|string',
+            'data' => 'required|array',
+            'latitude' => 'nullable|numeric',
+            'longitude' => 'nullable|numeric',
+            'metadata' => 'nullable|array'
+        ]);
+
+        $fieldData = FieldData::create($validated);
+
+        return response()->json([
+            'success' => true,
+            'id' => $fieldData->id,
+            'message' => 'Data received from drone'
+        ]);
+    }
+
+    public function apiShow(FieldData $fieldData)
+    {
+        return response()->json($fieldData->load('field'));
+    }
+
+    public function apiFieldData(Field $field)
+    {
+        $fieldData = $field->fieldData()
+            ->when(request('data_type'), function ($query, $type) {
+                $query->where('data_type', $type);
+            })
+            ->when(request('date_from'), function ($query, $date) {
+                $query->whereDate('collection_date', '>=', $date);
+            })
+            ->when(request('date_to'), function ($query, $date) {
+                $query->whereDate('collection_date', '<=', $date);
+            })
+            ->orderBy('collection_date', 'desc')
+            ->get();
+
+        return response()->json([
+            'field' => $field,
+            'data' => $fieldData,
+            'count' => $fieldData->count()
+        ]);
     }
 }
