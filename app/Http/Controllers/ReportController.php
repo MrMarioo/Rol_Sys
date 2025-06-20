@@ -47,10 +47,15 @@ class ReportController extends Controller
             'description' => 'nullable|string',
             'fields_included' => 'required|array',
             'parameters' => 'required|array',
+            'content' => 'nullable|array',
         ]);
 
         $validated['user_id'] = Auth::id();
         $validated['status'] = 'draft';
+
+        if (!isset($validated['content'])) {
+            $validated['content'] = [];
+        }
 
         $report = Report::create($validated);
 
