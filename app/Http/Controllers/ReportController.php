@@ -2,13 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Analytics;
 use App\Models\Crop;
 use App\Models\Field;
 use App\Models\Report;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
+use Illuminate\Support\Carbon;
 
 class ReportController extends Controller
 {
@@ -154,15 +157,13 @@ class ReportController extends Controller
             abort(403);
         }
 
-        // Simple PDF generation (you can use laravel-dompdf or similar)
-        $html = view('reports.pdf', compact('report'))->render();
+        $html = view('reports-pdf', compact('report'))->render();
+
+        $pdf = Pdf::loadHTML($html);
 
         $filename = 'report-' . $report->id . '-' . now()->format('Y-m-d') . '.pdf';
 
-        // For now, return HTML (implement PDF library later)
-        return response($html)
-            ->header('Content-Type', 'text/html')
-            ->header('Content-Disposition', "attachment; filename={$filename}");
+        return $pdf->download($filename);
     }
 
     private function getAvailableTemplates(): array
