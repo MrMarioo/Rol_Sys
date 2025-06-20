@@ -693,7 +693,6 @@ export default {
                 </div>
             </div>
         </div>
-        >
         <div class="d-flex gap-3 justify-content-between mt-20">
             <div>
                 <Link :href="`/analytics`" class="btn btn-outline-primary">
