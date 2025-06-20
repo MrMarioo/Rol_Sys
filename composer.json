@@ -10,7 +10,7 @@
     "require": {
         "php": "^8.3",
         "barryvdh/laravel-debugbar": "^3.9",
-        "barryvdh/laravel-dompdf": "^2.0",
+        "barryvdh/laravel-dompdf": "^2.2",
         "barryvdh/laravel-snappy": "^1.0",
         "doctrine/dbal": "^3.6",
         "getbrevo/brevo-php": "1.x.x",
