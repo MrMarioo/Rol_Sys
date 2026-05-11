@@ -2,112 +2,93 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Carbon\Carbon;
-use Inertia\Inertia;
-use App\Models\Field;
-use App\Models\Crop;
-use App\Models\FieldData;
+use App\Http\Resources\AnalyticsResource;
+use App\Http\Resources\FieldDataResource;
+use App\Http\Resources\FieldResource;
 use App\Models\Analytics;
-use App\Models\User;
-use App\Models\DataSource;
+use App\Models\Crop;
+use App\Models\Field;
+use App\Models\FieldData;
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Collection as SupportCollection;
+use Illuminate\Support\Facades\Auth;
+use Inertia\Inertia;
 use Inertia\Response;
 
-class DashboardController extends Controller
+final class DashboardController extends Controller
 {
     public function index(): Response
     {
-        $stats = $this->getStats();
-        $fields = $this->getFields();
-        $crops = $this->getCrops();
-        $fieldData = $this->getRecentFieldData();
-        $analytics = $this->getRecentAnalytics();
-        $notifications = $this->getUnreadNotifications();
-
-        return Inertia::render('Dashboard/Index', [
-            'stats' => $stats,
-            'fields' => $fields,
-            'crops' => $crops,
-            'fieldData' => $fieldData,
-            'analytics' => $analytics,
-            'notifications' => $notifications,
-            'user' => Auth::user(),
-        ]);
+        return Inertia::render(
+            component: 'Dashboard/Index',
+            props: [
+                'stats' => $this->stats(),
+                'fields' => $this->fieldsWithActiveCrop(),
+                'crops' => $this->crops(),
+                'fieldData' => FieldDataResource::collection(resource: $this->recentFieldData()),
+                'analytics' => AnalyticsResource::collection(resource: $this->recentAnalytics()),
+                'notifications' => $this->unreadNotifications(),
+                'user' => Auth::user(),
+            ]
+        );
     }
-    private function getStats()
+
+    private function stats(): array
     {
+        $userId = Auth::id();
+
         return [
-            'totalFields' => $this->getTotalFields(),
-            'activeCrops' => $this->getActiveCrops(),
-            'pendingAlerts' => $this->getPendingAlerts(),
-            'recentDataCollections' => $this->getRecentDataCollections(),
+            'totalFields' => Field::where('user_id', $userId)->count(),
+            'activeCrops' => $this->activeCropsCount($userId),
+            'pendingAlerts' => Auth::user()->unreadNotifications->count(),
+            'recentDataCollections' => $this->recentDataCollectionsCount($userId),
         ];
     }
-    private function getFields(): Collection
+
+    private function fieldsWithActiveCrop(): SupportCollection
     {
         $fields = Field::with([
-            'crops' => function ($query) {
-                $query
-                    ->where('status', 'active')
-                    ->whereNull('actual_harvest_date');
-            },
+            'crops' => fn ($q) => $q->where('status', 'active')->whereNull('actual_harvest_date'),
         ])
             ->where('user_id', Auth::id())
             ->get();
-        return $fields->map(function ($field) {
-            $field->current_crop = $field->crops->first()
-                ? $field->crops->first()->crop
-                : null;
-            unset($field->crops);
-            return $field;
+
+        return $fields->map(function (Field $field) {
+            $activeCrop = $field->crops->first();
+            $payload = FieldResource::make(resource: $field)->resolve();
+            $payload['current_crop'] = $activeCrop?->only(['id', 'name', 'description']);
+
+            return $payload;
         });
     }
-    private function getCrops(): Collection
+
+    private function crops(): Collection
     {
-        return Crop::select('id', 'name', 'description')
-            ->orderBy('name')
-            ->get();
+        return Crop::select(['id', 'name', 'description'])->orderBy('name')->get();
     }
-    private function getRecentFieldData(): Collection
+
+    private function recentFieldData(): Collection
     {
         return FieldData::with('field')
-            ->whereHas('field', function ($query) {
-                $query->where('user_id', Auth::id());
-            })
-            ->select(
-                'id',
-                'field_id',
-                'data_type',
-                'collection_date',
-                'latitude',
-                'longitude',
-            )
+            ->whereHas('field', fn ($q) => $q->where('user_id', Auth::id()))
+            ->select(['id', 'field_id', 'data_type', 'collection_date', 'latitude', 'longitude'])
             ->orderBy('collection_date', 'desc')
             ->limit(10)
             ->get();
     }
 
-    private function getRecentAnalytics(): Collection
+    private function recentAnalytics(): Collection
     {
         return Analytics::with('field')
-            ->whereHas('field', function ($query) {
-                $query->where('user_id', Auth::id());
-            })
-            ->select(
-                'id',
-                'field_id',
-                'analysis_type',
-                'analysis_date',
-                'recommendations',
-            )
+            ->whereHas('field', fn ($q) => $q->where('user_id', Auth::id()))
+            ->select(['id', 'field_id', 'analysis_type', 'analysis_date', 'recommendations'])
             ->orderBy('analysis_date', 'desc')
             ->limit(10)
             ->get();
     }
 
-    private function getUnreadNotifications()
+    private function unreadNotifications(): SupportCollection
     {
         return Auth::user()->unreadNotifications->map(function ($notification) {
             $data = is_string($notification->data)
@@ -124,37 +105,20 @@ class DashboardController extends Controller
         });
     }
 
-    private function getTotalFields()
+    private function activeCropsCount(int $userId): int
     {
-        return Field::where('user_id', Auth::id())->count();
-    }
-
-    private function getActiveCrops(): int
-    {
-        $user = Auth::user();
-
-        return Field::where('user_id', $user->id)
-            ->whereHas('crops', function ($query) {
-                $query
-                    ->where('status', 'active')
-                    ->whereNull('actual_harvest_date');
-            })
+        return Field::where('user_id', $userId)
+            ->whereHas(
+                'crops',
+                fn ($q) => $q->where('status', 'active')->whereNull('actual_harvest_date'),
+            )
             ->count();
     }
 
-    private function getPendingAlerts(): int
+    private function recentDataCollectionsCount(int $userId): int
     {
-        return Auth::user()->unreadNotifications->count();
-    }
-
-    private function getRecentDataCollections(): int
-    {
-        $lastWeek = Carbon::now()->subDays(7);
-
-        return FieldData::whereHas('field', function ($query) {
-            $query->where('user_id', Auth::id());
-        })
-            ->where('collection_date', '>=', $lastWeek->toDateString())
+        return FieldData::whereHas('field', fn ($q) => $q->where('user_id', $userId))
+            ->where('collection_date', '>=', Carbon::now()->subDays(7)->toDateString())
             ->count();
     }
 }

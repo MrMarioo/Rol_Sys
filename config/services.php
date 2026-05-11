@@ -35,4 +35,9 @@ return [
         ],
     ],
 
+    'ai' => [
+        'url' => env('AI_SERVICE_URL', 'http://ai-service:5000'),
+        'timeout' => env('AI_SERVICE_TIMEOUT', 60),
+    ],
+
 ];
