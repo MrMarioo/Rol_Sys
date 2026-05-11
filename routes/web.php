@@ -54,7 +54,7 @@ Route::middleware(['auth'])->group(function () {
         });
     Route::name('analytics.')
         ->prefix('analytics')
-        ->controller(\App\Http\Controllers\AnalitycsController::class)
+        ->controller(\App\Http\Controllers\AnalyticsController::class)
         ->group(function () {
             Route::get('/', 'index')->name('index');
             Route::post('/{field}', 'analyze')->name('analyze');
@@ -77,7 +77,4 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/{report}/download', 'download')->name('download');
             Route::delete('/{report}', 'destroy')->name('destroy');
         });
-    //
-    //    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
-    //    Route::patch('/notifications/{id}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
 });

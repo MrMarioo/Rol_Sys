@@ -30,3 +30,10 @@ yarn-error.log
 /storage/debugbar/
 storage/clockwork/
 storage/system_uptime.txt
+
+# Python AI service
+ai/__pycache__/
+ai/**/__pycache__/
+ai/.venv/
+ai/venv/
+*.pyc

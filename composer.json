@@ -35,6 +35,7 @@
         "socialiteproviders/microsoft-azure": "^5.2",
         "spatie/laravel-activitylog": "^4.7",
         "spatie/laravel-permission": "^6.0",
+        "spatie/laravel-query-builder": "^6.4",
         "spatie/laravel-slack-alerts": "^1.2",
         "spatie/pdf-to-text": "^1.52",
         "spatie/simple-excel": "^3.3",

@@ -3,95 +3,132 @@
 namespace App\Http\Controllers;
 
 use App\Enums\Statuses;
-use App\Models\Crop;
+use App\Http\Requests\StoreFieldRequest;
+use App\Http\Requests\UpdateFieldRequest;
+use App\Http\Resources\FieldResource;
 use App\Models\Field;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
+use Spatie\QueryBuilder\AllowedFilter;
+use Spatie\QueryBuilder\QueryBuilder;
 
-class FieldController extends Controller
+final class FieldController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index(): Response
+    public function __construct(
+        private readonly Field $field,
+    ) {}
+
+    public function index(Request $request): Response
     {
-        $field = Field::querySearch(request()->search)
-            ->orderBy('created_at', 'desc')
-            ->paginate(config('pagination.list'))
+        $fields = QueryBuilder::for(subject: Field::class)
+            ->where('user_id', Auth::id())
+            ->allowedFilters(filters: [
+                'name',
+                'location',
+                AllowedFilter::exact(name: 'status'),
+            ])
+            ->allowedSorts(sorts: ['name', 'size', 'created_at'])
+            ->defaultSort(sorts: ['-created_at'])
+            ->paginate(
+                perPage: $request->integer(key: 'per_page', default: config('pagination.list')),
+            )
             ->withQueryString();
 
-        $statuses = array_column(Statuses::cases(), 'value');
-
-        return Inertia::render('Field/Index', [
-            'fields' => $field,
-            'user' => auth()->user(),
-            'statuses' => $statuses,
-        ]);
+        return Inertia::render(
+            component: 'Field/Index',
+            props: [
+                'fields' => FieldResource::collection(resource: $fields),
+                'user' => Auth::user(),
+                'statuses' => array_column(Statuses::cases(), 'value'),
+            ]
+        );
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
+    public function show(Field $field): Response
     {
-        //
+        $this->authorize('view', $field);
+
+        return Inertia::render(
+            component: 'Field/Show',
+            props: [
+                'field' => FieldResource::make(resource: $field)->resolve(),
+            ]
+        );
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
+    public function edit(Field $field): Response
     {
-        $validate = $request->validate([
-            'name' => 'required|string',
-            'location' => 'nullable|string',
-            'size' => 'required|numeric',
-            'description' => 'nullable|string',
-            'boundaries' => 'required|array',
-            'status' => 'required|string',
-        ]);
-        $validate['user_id'] = Auth::id();
+        $this->authorize('update', $field);
 
-        Field::create($validate);
-
-        return back()->with('success', 'Field created.');
+        return Inertia::render(
+            component: 'Field/Edit',
+            props: [
+                'field' => FieldResource::make(resource: $field)->resolve(),
+                'statuses' => array_column(Statuses::cases(), 'value'),
+            ]
+        );
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Field $field)
+    public function store(StoreFieldRequest $request): RedirectResponse
     {
-        return Inertia::render('Field/Show', [
-            'field' => $field,
-        ]);
+        /** @var Field $field */
+        $field = $this->field->create($request->validated());
+
+        return redirect()
+            ->route(route: 'fields.index')
+            ->with(
+                key: 'success',
+                value: sprintf('Field %s has been created.', $field->name),
+            );
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Field $field)
+    public function update(UpdateFieldRequest $request, Field $field): RedirectResponse
     {
-        return Inertia::render('Field/Edit', [
-            'field' => $field,
-        ]);
+        $field->update($request->validated());
+
+        return redirect()
+            ->route(route: 'fields.index')
+            ->with(
+                key: 'success',
+                value: sprintf('Field %s has been updated.', $field->name),
+            );
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
+    public function destroy(Field $field): RedirectResponse
     {
-        //
+        $this->authorize('delete', $field);
+
+        $name = $field->name;
+        $field->delete();
+
+        return redirect()
+            ->route(route: 'fields.index')
+            ->with(
+                key: 'success',
+                value: sprintf('Field %s has been deleted.', $name),
+            );
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
+    public function data(Field $field): RedirectResponse
     {
-        //
+        $this->authorize('viewData', $field);
+
+        return redirect()->route(
+            route: 'field-data.index',
+            parameters: ['field_id' => $field->id],
+        );
+    }
+
+    public function analytics(Field $field): RedirectResponse
+    {
+        $this->authorize('view', $field);
+
+        return redirect()->route(
+            route: 'analytics.index',
+            parameters: ['filter[field_id]' => $field->id],
+        );
     }
 }

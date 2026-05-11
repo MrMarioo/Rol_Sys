@@ -255,7 +255,7 @@
                                         <li class="nk-menu-item">
                                             <Link href="/analytics" class="nk-menu-link">
                                                 <span class="nk-menu-icon"><em class="icon ni ni-growth"></em></span>
-                                                <span class="nk-menu-text">Analitycs</span>
+                                                <span class="nk-menu-text">Analytics</span>
                                             </Link>
                                         </li>
                                         <li class="nk-menu-item">
