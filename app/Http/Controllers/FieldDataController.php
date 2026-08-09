@@ -49,8 +49,8 @@ final class FieldDataController extends Controller
         return Inertia::render(
             component: 'FieldData/Index',
             props: [
-                'fieldData' => FieldDataResource::collection(resource: $fieldData),
-                'fields' => FieldResource::collection(resource: $fields),
+                'fieldData' => $fieldData->through(fn (FieldData $data) => FieldDataResource::make($data)->resolve()),
+                'fields' => FieldResource::collection(resource: $fields)->resolve(),
                 'dataTypes' => $dataTypes,
                 'filters' => $request->only([
                     'search',
@@ -70,7 +70,7 @@ final class FieldDataController extends Controller
         return Inertia::render(
             component: 'FieldData/CreateForm',
             props: [
-                'fields' => FieldResource::collection(resource: $fields),
+                'fields' => FieldResource::collection(resource: $fields)->resolve(),
             ]
         );
     }
@@ -110,7 +110,7 @@ final class FieldDataController extends Controller
             component: 'FieldData/Edit',
             props: [
                 'fieldData' => FieldDataResource::make(resource: $fieldData)->resolve(),
-                'fields' => FieldResource::collection(resource: $fields),
+                'fields' => FieldResource::collection(resource: $fields)->resolve(),
             ]
         );
     }

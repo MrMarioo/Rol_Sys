@@ -46,8 +46,8 @@ final class AnalyticsController extends Controller
         return Inertia::render(
             component: 'Analytics/Index',
             props: [
-                'analytics' => AnalyticsResource::collection(resource: $analytics),
-                'fields' => FieldResource::collection(resource: $fields),
+                'analytics' => $analytics->through(fn (Analytics $analysis) => AnalyticsResource::make($analysis)->resolve()),
+                'fields' => FieldResource::collection(resource: $fields)->resolve(),
                 'sensitivities' => ['low', 'medium', 'high'],
             ]
         );

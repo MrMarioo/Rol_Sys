@@ -49,7 +49,7 @@ final class ReportController extends Controller
         return Inertia::render(
             component: 'Reports/Index',
             props: [
-                'reports' => ReportResource::collection(resource: $reports),
+                'reports' => $reports->through(fn (Report $report) => ReportResource::make($report)->resolve()),
                 'templates' => $this->availableTemplates(),
             ]
         );
@@ -64,7 +64,7 @@ final class ReportController extends Controller
             props: [
                 'selectedTemplate' => $request->string(key: 'template', default: 'weekly_summary')->toString(),
                 'templates' => $this->availableTemplates(),
-                'fields' => FieldResource::collection(resource: $fields),
+                'fields' => FieldResource::collection(resource: $fields)->resolve(),
                 'crops' => Crop::all(),
             ]
         );
@@ -112,7 +112,7 @@ final class ReportController extends Controller
             props: [
                 'report' => ReportResource::make(resource: $report)->resolve(),
                 'templates' => $this->availableTemplates(),
-                'fields' => FieldResource::collection(resource: $fields),
+                'fields' => FieldResource::collection(resource: $fields)->resolve(),
                 'crops' => Crop::all(),
             ]
         );
