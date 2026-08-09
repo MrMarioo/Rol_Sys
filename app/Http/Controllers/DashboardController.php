@@ -26,8 +26,8 @@ final class DashboardController extends Controller
                 'stats' => $this->stats(),
                 'fields' => $this->fieldsWithActiveCrop(),
                 'crops' => $this->crops(),
-                'fieldData' => FieldDataResource::collection(resource: $this->recentFieldData()),
-                'analytics' => AnalyticsResource::collection(resource: $this->recentAnalytics()),
+                'fieldData' => FieldDataResource::collection(resource: $this->recentFieldData())->resolve(),
+                'analytics' => AnalyticsResource::collection(resource: $this->recentAnalytics())->resolve(),
                 'notifications' => $this->unreadNotifications(),
                 'user' => Auth::user(),
             ]

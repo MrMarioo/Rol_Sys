@@ -40,7 +40,7 @@ final class FieldController extends Controller
         return Inertia::render(
             component: 'Field/Index',
             props: [
-                'fields' => FieldResource::collection(resource: $fields),
+                'fields' => $fields->through(fn (Field $field) => FieldResource::make($field)->resolve()),
                 'user' => Auth::user(),
                 'statuses' => array_column(Statuses::cases(), 'value'),
             ]
