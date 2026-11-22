@@ -77,97 +77,46 @@
                                     </li>
                                     <!-- .dropdown -->
                                     <li class="dropdown notification-dropdown">
-                                        <a href="#" class="dropdown-toggle nk-quick-nav-icon me-lg-n1" data-bs-toggle="dropdown">
-                                            <div class="icon-status icon-status-info"><em class="icon ni ni-bell"></em></div>
+                                        <a href="#" class="dropdown-toggle nk-quick-nav-icon me-lg-n1 position-relative" data-bs-toggle="dropdown">
+                                            <div :class="['icon-status', unreadCount > 0 ? 'icon-status-danger' : 'icon-status-info']">
+                                                <em class="icon ni ni-bell"></em>
+                                            </div>
+                                            <span v-if="unreadCount > 0" class="badge rounded-pill bg-danger notification-badge">
+                                                {{ unreadCount > 99 ? '99+' : unreadCount }}
+                                            </span>
                                         </a>
                                         <div class="dropdown-menu dropdown-menu-xl dropdown-menu-end dropdown-menu-s1">
                                             <div class="dropdown-head">
                                                 <span class="sub-title nk-dropdown-title">Notifications</span>
-                                                <a href="#">Mark All as Read</a>
+                                                <a v-if="unreadCount > 0" href="#" @click.prevent="markAllNotificationsAsRead">Mark All as Read</a>
                                             </div>
                                             <div class="dropdown-body">
                                                 <div class="nk-notification">
-                                                    <div class="nk-notification-item dropdown-inner">
-                                                        <div class="nk-notification-icon">
-                                                            <em class="icon icon-circle bg-warning-dim ni ni-curve-down-right"></em>
-                                                        </div>
-                                                        <div class="nk-notification-content">
-                                                            <div class="nk-notification-text">
-                                                                You have requested to
-                                                                <span>Widthdrawal</span>
-                                                            </div>
-                                                            <div class="nk-notification-time">2 hrs ago</div>
-                                                        </div>
+                                                    <div v-if="latestNotifications.length === 0" class="nk-notification-item dropdown-inner text-soft">
+                                                        No notifications
                                                     </div>
-                                                    <div class="nk-notification-item dropdown-inner">
+                                                    <div
+                                                        v-for="notification in latestNotifications"
+                                                        :key="notification.id"
+                                                        class="nk-notification-item dropdown-inner notification-row"
+                                                        :class="{ 'is-unread': !notification.read }"
+                                                        @click="openNotification(notification)"
+                                                    >
                                                         <div class="nk-notification-icon">
-                                                            <em class="icon icon-circle bg-success-dim ni ni-curve-down-left"></em>
+                                                            <NotificationIcon :level="notification.level" />
                                                         </div>
                                                         <div class="nk-notification-content">
                                                             <div class="nk-notification-text">
-                                                                Your
-                                                                <span>Deposit Order</span>
-                                                                is placed
+                                                                <span>{{ notification.title }}</span>
+                                                                <div>{{ notification.message }}</div>
                                                             </div>
-                                                            <div class="nk-notification-time">2 hrs ago</div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="nk-notification-item dropdown-inner">
-                                                        <div class="nk-notification-icon">
-                                                            <em class="icon icon-circle bg-warning-dim ni ni-curve-down-right"></em>
-                                                        </div>
-                                                        <div class="nk-notification-content">
-                                                            <div class="nk-notification-text">
-                                                                You have requested to
-                                                                <span>Widthdrawal</span>
-                                                            </div>
-                                                            <div class="nk-notification-time">2 hrs ago</div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="nk-notification-item dropdown-inner">
-                                                        <div class="nk-notification-icon">
-                                                            <em class="icon icon-circle bg-success-dim ni ni-curve-down-left"></em>
-                                                        </div>
-                                                        <div class="nk-notification-content">
-                                                            <div class="nk-notification-text">
-                                                                Your
-                                                                <span>Deposit Order</span>
-                                                                is placed
-                                                            </div>
-                                                            <div class="nk-notification-time">2 hrs ago</div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="nk-notification-item dropdown-inner">
-                                                        <div class="nk-notification-icon">
-                                                            <em class="icon icon-circle bg-warning-dim ni ni-curve-down-right"></em>
-                                                        </div>
-                                                        <div class="nk-notification-content">
-                                                            <div class="nk-notification-text">
-                                                                You have requested to
-                                                                <span>Widthdrawal</span>
-                                                            </div>
-                                                            <div class="nk-notification-time">2 hrs ago</div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="nk-notification-item dropdown-inner">
-                                                        <div class="nk-notification-icon">
-                                                            <em class="icon icon-circle bg-success-dim ni ni-curve-down-left"></em>
-                                                        </div>
-                                                        <div class="nk-notification-content">
-                                                            <div class="nk-notification-text">
-                                                                Your
-                                                                <span>Deposit Order</span>
-                                                                is placed
-                                                            </div>
-                                                            <div class="nk-notification-time">2 hrs ago</div>
+                                                            <div class="nk-notification-time">{{ notification.created_at }}</div>
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <!-- .nk-notification -->
                                             </div>
-                                            <!-- .nk-dropdown-body -->
                                             <div class="dropdown-foot justify-center">
-                                                <a href="#">View All</a>
+                                                <Link :href="route('notifications.index')">View All</Link>
                                             </div>
                                         </div>
                                     </li>
@@ -344,8 +293,9 @@
 </template>
 
 <script>
-import { Head, Link, usePage } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { Head, Link, router, usePage } from '@inertiajs/vue3';
+import { computed, ref } from 'vue';
+import NotificationIcon from '@/Components/NotificationIcon.vue';
 import axios from 'axios';
 import AuthenticationCardLogo from '@/Components/AuthenticationCardLogo.vue';
 import { Dropdown } from 'bootstrap';
@@ -361,6 +311,7 @@ export default {
         AuthenticationCardLogo,
         Head,
         Link,
+        NotificationIcon,
     },
 
     setup(props) {
@@ -400,7 +351,23 @@ export default {
             }
         };
 
+        const page = usePage();
+        const unreadCount = computed(() => page.props.notifications?.unread_count ?? 0);
+        const latestNotifications = computed(() => page.props.notifications?.latest ?? []);
+
+        const openNotification = (notification) => {
+            router.post(route('notifications.read', notification.id));
+        };
+
+        const markAllNotificationsAsRead = () => {
+            router.post(route('notifications.read-all'), {}, { preserveScroll: true });
+        };
+
         return {
+            unreadCount,
+            latestNotifications,
+            openNotification,
+            markAllNotificationsAsRead,
             theme,
             logOut,
             toggleTheme,
@@ -408,7 +375,18 @@ export default {
             toggleMobileMenu,
         };
     },
+    data() {
+        return {
+            notificationPoll: null,
+        };
+    },
     mounted() {
+        this.notificationPoll = setInterval(() => {
+            if (!document.hidden) {
+                router.reload({ only: ['notifications'] });
+            }
+        }, 60000);
+
         const dropdownElementList = document.querySelectorAll('[data-bs-toggle="dropdown"]');
         dropdownElementList.forEach((item) => {
             new Dropdown(item);
@@ -439,10 +417,33 @@ export default {
         //     });
         // }
     },
+    beforeUnmount() {
+        clearInterval(this.notificationPoll);
+    },
 };
 </script>
 
 <style scoped>
+.notification-badge {
+    position: absolute;
+    top: -4px;
+    right: -8px;
+    font-size: 0.65rem;
+    padding: 0.2em 0.45em;
+}
+
+.notification-dropdown .dropdown-menu {
+    min-width: 360px;
+}
+
+.notification-row {
+    cursor: pointer;
+}
+
+.notification-row.is-unread .nk-notification-text span {
+    font-weight: 700;
+}
+
 .dropdown-menu {
     padding: 0.5rem 0;
     min-width: 240px;

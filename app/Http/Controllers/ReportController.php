@@ -9,6 +9,7 @@ use App\Http\Resources\ReportResource;
 use App\Models\Crop;
 use App\Models\Field;
 use App\Models\Report;
+use App\Notifications\ReportGenerated;
 use App\Services\ReportGenerationService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
@@ -155,6 +156,8 @@ final class ReportController extends Controller
                 'content' => $content,
                 'status' => 'generated',
             ]);
+
+            $report->user->notify(new ReportGenerated($report));
 
             return redirect()
                 ->route(route: 'reports.show', parameters: $report->id)

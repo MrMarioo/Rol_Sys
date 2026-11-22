@@ -37,3 +37,5 @@ ai/**/__pycache__/
 ai/.venv/
 ai/venv/
 *.pyc
+/.superpowers/
+/.playwright-mcp/

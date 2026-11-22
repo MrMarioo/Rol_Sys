@@ -77,4 +77,13 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/{report}/download', 'download')->name('download');
             Route::delete('/{report}', 'destroy')->name('destroy');
         });
+
+    Route::name('notifications.')
+        ->prefix('notifications')
+        ->controller(\App\Http\Controllers\NotificationController::class)
+        ->group(function () {
+            Route::get('/', 'index')->name('index');
+            Route::post('/read-all', 'readAll')->name('read-all');
+            Route::post('/{notification}/read', 'read')->name('read');
+        });
 });

@@ -9,7 +9,6 @@ const props = defineProps({
     crops: Array,
     fieldData: Array,
     analytics: Array,
-    notifications: Array,
 });
 
 defineOptions({
@@ -72,7 +71,7 @@ const loading = ref(false);
                             <div class="card-body">
                                 <h6 class="card-subtitle text-muted mb-2">Alerts</h6>
                                 <h2 class="card-title text-danger mb-3">{{ stats?.pendingAlerts || 0 }}</h2>
-                                <div class="small text-muted">Unread: {{ notifications?.length || 0 }}</div>
+                                <div class="small text-muted">Unread: {{ $page.props.notifications?.unread_count || 0 }}</div>
                             </div>
                         </div>
                     </div>

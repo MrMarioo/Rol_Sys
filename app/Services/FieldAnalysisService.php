@@ -5,8 +5,11 @@ namespace App\Services;
 use App\Models\Analytics;
 use App\Models\Field;
 use App\Models\FieldData;
+use App\Notifications\AnalysisCompleted;
+use App\Notifications\AnalysisFailed;
 use Illuminate\Support\Facades\Http;
 use RuntimeException;
+use Throwable;
 
 class FieldAnalysisService
 {
@@ -18,18 +21,13 @@ class FieldAnalysisService
     {
         $payload = $this->buildPayload($field, $parameters);
 
-        $response = Http::timeout(60)->post(
-            sprintf('%s/analyze/field/%d', $this->aiServiceUrl(), $field->id),
-            $payload,
-        );
+        try {
+            $results = $this->requestAnalysis($field, $payload);
+        } catch (Throwable $e) {
+            $field->user->notify(new AnalysisFailed($field));
 
-        if (! $response->successful()) {
-            throw new RuntimeException(
-                sprintf('AI service returned %d: %s', $response->status(), $response->body()),
-            );
+            throw $e;
         }
-
-        $results = $response->json();
 
         /** @var Analytics $analytics */
         $analytics = $this->analytics->create([
@@ -52,7 +50,25 @@ class FieldAnalysisService
             ],
         ]);
 
+        $field->user->notify(new AnalysisCompleted($analytics));
+
         return $analytics;
+    }
+
+    private function requestAnalysis(Field $field, array $payload): array
+    {
+        $response = Http::timeout(60)->post(
+            sprintf('%s/analyze/field/%d', $this->aiServiceUrl(), $field->id),
+            $payload,
+        );
+
+        if (! $response->successful()) {
+            throw new RuntimeException(
+                sprintf('AI service returned %d: %s', $response->status(), $response->body()),
+            );
+        }
+
+        return $response->json();
     }
 
     private function buildPayload(Field $field, array $parameters): array
