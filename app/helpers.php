@@ -1,18 +1,13 @@
 <?php
 
-use App\Enums\NotificationType;
-use App\Mail\DevsNotification;
 use App\Models\Client;
 use App\Models\Company;
-use App\Models\Notification;
 use App\Models\Setting;
 use App\Models\Snapshot;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Mail;
 
 if (!defined('MODEL_NAMESPACE')) {
     define('MODEL_NAMESPACE', 'App\Models\\');
@@ -238,42 +233,6 @@ if (!function_exists('activeAt')) {
                     ->where('active_to', '>', $date)
                     ->orWhereNull('active_to');
             });
-    }
-}
-
-if (!function_exists('notifyDevelopers')) {
-    function notifyDevelopers(
-        string $message,
-        $appNotification = true,
-        $emailNotification = true,
-    ): void {
-        if (Cache::has('devs-' . $message)) {
-            return;
-        }
-
-        $devs = User::developer()->get();
-
-        if ($appNotification) {
-            foreach ($devs as $dev) {
-                Notification::create([
-                    'notifiable_id' => $dev->id,
-                    'notifiable_type' => User::class,
-                    'type' => NotificationType::Error,
-                    'title' => 'Error!',
-                    'content' => $message,
-                ]);
-            }
-        }
-
-        if ($emailNotification) {
-            foreach ($devs as $dev) {
-                Mail::to($dev->email)->queue(
-                    new DevsNotification($message, $dev->full_name),
-                );
-            }
-        }
-
-        Cache::put('devs-' . $message, true, now()->addDay());
     }
 }
 

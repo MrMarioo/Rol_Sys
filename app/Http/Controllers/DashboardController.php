@@ -28,7 +28,6 @@ final class DashboardController extends Controller
                 'crops' => $this->crops(),
                 'fieldData' => FieldDataResource::collection(resource: $this->recentFieldData())->resolve(),
                 'analytics' => AnalyticsResource::collection(resource: $this->recentAnalytics())->resolve(),
-                'notifications' => $this->unreadNotifications(),
                 'user' => Auth::user(),
             ]
         );
@@ -86,23 +85,6 @@ final class DashboardController extends Controller
             ->orderBy('analysis_date', 'desc')
             ->limit(10)
             ->get();
-    }
-
-    private function unreadNotifications(): SupportCollection
-    {
-        return Auth::user()->unreadNotifications->map(function ($notification) {
-            $data = is_string($notification->data)
-                ? json_decode($notification->data, true)
-                : (array) $notification->data;
-
-            return [
-                'id' => $notification->id,
-                'type' => $data['type'] ?? 'info',
-                'title' => $data['title'] ?? '',
-                'message' => $data['message'] ?? '',
-                'created_at' => $notification->created_at->diffForHumans(),
-            ];
-        });
     }
 
     private function activeCropsCount(int $userId): int
