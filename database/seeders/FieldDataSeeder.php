@@ -41,10 +41,10 @@ class FieldDataSeeder extends Seeder
                 'size' => 5.5,
                 'description' => 'Main test field for growth prediction',
                 'boundaries' => [
-                    ['lat' => 50.0647, 'lng' => 19.9450],
-                    ['lat' => 50.0650, 'lng' => 19.9460],
-                    ['lat' => 50.0645, 'lng' => 19.9465],
-                    ['lat' => 50.0642, 'lng' => 19.9455],
+                    [19.9450, 50.0647],
+                    [19.9460, 50.0650],
+                    [19.9465, 50.0645],
+                    [19.9455, 50.0642],
                 ],
                 'status' => 'active'
             ]);

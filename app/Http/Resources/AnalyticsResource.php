@@ -16,7 +16,10 @@ class AnalyticsResource extends JsonResource
         return [
             'id' => $this->id,
             'field_id' => $this->field_id,
-            'field' => FieldResource::make($this->whenLoaded('field')),
+            'field' => $this->whenLoaded(
+                relationship: 'field',
+                value: fn () => FieldResource::make($this->field)->resolve(),
+            ),
             'analysis_type' => $this->analysis_type,
             'analysis_date' => $this->analysis_date?->format('Y-m-d'),
             'results' => $this->results,

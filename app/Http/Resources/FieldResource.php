@@ -22,6 +22,10 @@ class FieldResource extends JsonResource
             'description' => $this->description,
             'boundaries' => $this->boundaries,
             'status' => $this->status,
+            'crops' => $this->whenLoaded(
+                relationship: 'crops',
+                value: fn () => $this->crops->map(fn ($crop) => ['id' => $crop->id, 'name' => $crop->name])->all(),
+            ),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];

@@ -16,7 +16,10 @@ class FieldDataResource extends JsonResource
         return [
             'id' => $this->id,
             'field_id' => $this->field_id,
-            'field' => FieldResource::make($this->whenLoaded('field')),
+            'field' => $this->whenLoaded(
+                relationship: 'field',
+                value: fn () => FieldResource::make($this->field)->resolve(),
+            ),
             'collection_date' => $this->collection_date?->format('Y-m-d'),
             'data_type' => $this->data_type,
             'data' => $this->data,

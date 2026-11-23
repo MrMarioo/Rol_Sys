@@ -39,3 +39,4 @@ ai/venv/
 *.pyc
 /.superpowers/
 /.playwright-mcp/
+/docs/

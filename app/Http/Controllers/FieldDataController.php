@@ -8,6 +8,7 @@ use App\Http\Resources\FieldDataResource;
 use App\Http\Resources\FieldResource;
 use App\Models\Field;
 use App\Models\FieldData;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -30,6 +31,26 @@ final class FieldDataController extends Controller
             ->allowedFilters(filters: [
                 AllowedFilter::exact(name: 'field_id'),
                 AllowedFilter::exact(name: 'data_type'),
+                AllowedFilter::callback(
+                    name: 'search',
+                    callback: function (Builder $query, mixed $value) {
+                        $term = implode(',', (array) $value);
+
+                        $query->where(
+                            fn (Builder $searchQuery) => $searchQuery
+                                ->where('data_type', 'like', "%{$term}%")
+                                ->orWhereHas('field', fn (Builder $fieldQuery) => $fieldQuery->where('name', 'like', "%{$term}%"))
+                        );
+                    },
+                ),
+                AllowedFilter::callback(
+                    name: 'date_from',
+                    callback: fn (Builder $query, string $value) => $query->whereDate('collection_date', '>=', $value),
+                ),
+                AllowedFilter::callback(
+                    name: 'date_to',
+                    callback: fn (Builder $query, string $value) => $query->whereDate('collection_date', '<=', $value),
+                ),
             ])
             ->allowedSorts(sorts: ['collection_date', 'created_at', 'data_type'])
             ->defaultSort(sorts: ['-collection_date'])
@@ -52,7 +73,7 @@ final class FieldDataController extends Controller
                 'fieldData' => $fieldData->through(fn (FieldData $data) => FieldDataResource::make($data)->resolve()),
                 'fields' => FieldResource::collection(resource: $fields)->resolve(),
                 'dataTypes' => $dataTypes,
-                'filters' => $request->only([
+                'filters' => $request->collect(key: 'filter')->only([
                     'search',
                     'field_id',
                     'data_type',
