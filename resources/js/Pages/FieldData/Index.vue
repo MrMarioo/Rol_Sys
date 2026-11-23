@@ -206,7 +206,7 @@ const deleteModal = ref(null);
 const dataToDelete = ref(null);
 const filters = reactive({
     search: props.filters.search || '',
-    field_id: props.filters.field_id || '',
+    field_id: props.filters.field_id ? Number(props.filters.field_id) : '',
     data_type: props.filters.data_type || '',
     date_from: props.filters.date_from || '',
     date_to: props.filters.date_to || '',
@@ -219,7 +219,9 @@ onMounted(() => {
 
 // Methods
 const applyFilters = () => {
-    router.get(route('field-data.index'), filters, {
+    const activeFilters = Object.fromEntries(Object.entries(filters).filter(([, value]) => value !== '' && value !== null));
+
+    router.get(route('field-data.index'), { filter: activeFilters }, {
         preserveState: true,
         replace: true,
     });

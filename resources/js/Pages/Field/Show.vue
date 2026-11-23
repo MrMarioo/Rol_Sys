@@ -27,6 +27,34 @@
                     </div>
                 </div>
 
+                <template v-if="recentReadings.length">
+                    <div v-if="latestReadings.length" class="col-12">
+                        <LatestReadingTiles :readings="latestReadings" />
+                    </div>
+
+                    <div v-if="Object.keys(trendSeries).length" class="col-12">
+                        <FieldTrendChart :series="trendSeries" />
+                    </div>
+
+                    <div class="col-12">
+                        <RecentReadingsTable :readings="recentReadings" :field-id="field.id" />
+                    </div>
+                </template>
+
+                <div v-else class="col-12">
+                    <div class="card">
+                        <div class="card-body text-center p-5">
+                            <em class="icon ni ni-growth text-soft empty-icon"></em>
+                            <h6 class="mt-3">No data collected for this field yet</h6>
+                            <p class="text-soft">Add the first measurement to see readings and trends here.</p>
+                            <Link :href="route('field-data.create')" class="btn btn-primary">
+                                <em class="icon ni ni-plus me-1"></em>
+                                <span>Add data</span>
+                            </Link>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="col-md-6">
                     <div class="card h-100">
                         <div class="card-body">
@@ -109,18 +137,36 @@
 <script>
 import { Link } from '@inertiajs/vue3';
 import FieldMap from '@/Components/FieldMap.vue';
+import FieldTrendChart from '@/Components/Field/FieldTrendChart.vue';
+import LatestReadingTiles from '@/Components/Field/LatestReadingTiles.vue';
+import RecentReadingsTable from '@/Components/Field/RecentReadingsTable.vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 
 export default {
     layout: AppLayout,
     components: {
         FieldMap,
+        FieldTrendChart,
+        LatestReadingTiles,
         Link,
+        RecentReadingsTable,
     },
     props: {
         field: {
             type: Object,
             required: true,
+        },
+        latestReadings: {
+            type: Array,
+            default: () => [],
+        },
+        trendSeries: {
+            type: [Object, Array],
+            default: () => ({}),
+        },
+        recentReadings: {
+            type: Array,
+            default: () => [],
         },
     },
     setup(props) {
@@ -152,6 +198,10 @@ export default {
 </script>
 
 <style scoped>
+.empty-icon {
+    font-size: 2.5rem;
+}
+
 .form-control-plaintext {
     padding: 0.375rem 0;
     font-size: 0.875rem;

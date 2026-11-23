@@ -4,18 +4,18 @@ import Swal from 'sweetalert2';
 
 function watchForm(form) {
     watch(form, (values) => {
-        let parsedData = Object.keys(values.data()).reduce((a, b) => {
-            if (values.data()[b] != null) {
-                a[b] = values.data()[b];
-            }
-            return a;
-        }, {});
+        const activeFilters = Object.fromEntries(
+            Object.entries(values.data()).filter(([, value]) => value !== null && value !== ''),
+        );
 
-        router.get(location.origin + location.pathname, parsedData, {
+        router.get(location.origin + location.pathname, { filter: activeFilters }, {
             preserveState: true,
             replace: true,
         });
     });
+}
+function filterParam(name) {
+    return new URLSearchParams(location.search).get(`filter[${name}]`);
 }
 function auth() {
     return usePage().props.auth.user;
@@ -45,4 +45,4 @@ const Toast = Swal.mixin({
     },
 });
 
-export { watchForm, auth, numberFormat, ConfirmModal, Toast };
+export { watchForm, filterParam, auth, numberFormat, ConfirmModal, Toast };

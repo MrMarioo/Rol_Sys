@@ -29,15 +29,25 @@ class FieldSeeder extends Seeder
                         ($i + 1) .
                         ' należącego do ' .
                         $user->name,
-                    'boundaries' => json_encode([
-                        [rand(51.0, 52.0), rand(20.0, 21.0)],
-                        [rand(51.0, 52.0), rand(20.0, 21.0)],
-                        [rand(51.0, 52.0), rand(20.0, 21.0)],
-                        [rand(51.0, 52.0), rand(20.0, 21.0)],
-                    ]),
+                    'boundaries' => $this->randomRectangle(),
                     'status' => 'active',
                 ]);
             }
         }
+    }
+
+    private function randomRectangle(): array
+    {
+        $lon = 20.4 + mt_rand(0, 6000) / 10000;
+        $lat = 50.7 + mt_rand(0, 3000) / 10000;
+        $width = 0.003 + mt_rand(0, 40) / 10000;
+        $height = 0.002 + mt_rand(0, 30) / 10000;
+
+        return [
+            [round($lon, 6), round($lat, 6)],
+            [round($lon + $width, 6), round($lat, 6)],
+            [round($lon + $width, 6), round($lat + $height, 6)],
+            [round($lon, 6), round($lat + $height, 6)],
+        ];
     }
 }

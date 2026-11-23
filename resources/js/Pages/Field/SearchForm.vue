@@ -1,6 +1,6 @@
 <script>
 import { useForm } from '@inertiajs/vue3';
-import { watchForm } from '@/Helpers';
+import { filterParam, watchForm } from '@/Helpers';
 import ResetButton from '@/Components/ResetButton.vue';
 
 export default {
@@ -13,11 +13,11 @@ export default {
     },
     setup(props) {
         const form = useForm({
-            name: route().params.name || null,
-            status: route().params.status || null,
-            crop_id: route().params.crop_id || null,
-            size_min: route().params.size_min || null,
-            size_max: route().params.size_max || null,
+            name: filterParam('name'),
+            status: filterParam('status'),
+            crop_id: filterParam('crop_id') ? Number(filterParam('crop_id')) : null,
+            size_min: filterParam('size_min'),
+            size_max: filterParam('size_max'),
         });
 
         watchForm(form);
