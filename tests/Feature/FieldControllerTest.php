@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Analytics;
 use App\Models\Crop;
 use App\Models\Field;
 use App\Models\FieldData;
@@ -95,5 +96,42 @@ class FieldControllerTest extends TestCase
         $this->actingAs($user)
             ->get(route('fields.data', $field))
             ->assertRedirect(route('field-data.index', ['filter[field_id]' => $field->id]));
+    }
+
+    public function test_show_includes_analytics_summary(): void
+    {
+        $user = User::factory()->create();
+        $field = Field::factory()->for($user)->create();
+        Analytics::factory()->create(['field_id' => $field->id]);
+
+        $this->actingAs($user)->get(route('fields.show', $field))
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->has('analysisHistory', 1)
+                ->has('latestAnalysis.recommendations')
+                ->where('sensitivities', ['low', 'medium', 'high'])
+            );
+    }
+
+    public function test_show_returns_empty_analytics_for_field_without_analyses(): void
+    {
+        $user = User::factory()->create();
+        $field = Field::factory()->for($user)->create();
+
+        $this->actingAs($user)->get(route('fields.show', $field))
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->where('latestAnalysis', null)
+                ->has('analysisHistory', 0)
+                ->has('topRecommendations', 0)
+            );
+    }
+
+    public function test_analytics_route_redirects_to_analytics_tab(): void
+    {
+        $user = User::factory()->create();
+        $field = Field::factory()->for($user)->create();
+
+        $this->actingAs($user)
+            ->get(route('fields.analytics', $field))
+            ->assertRedirect(route('fields.show', ['field' => $field, 'tab' => 'analytics']));
     }
 }

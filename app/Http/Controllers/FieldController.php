@@ -8,6 +8,7 @@ use App\Http\Requests\UpdateFieldRequest;
 use App\Http\Resources\FieldResource;
 use App\Models\Crop;
 use App\Models\Field;
+use App\Services\FieldAnalyticsSummaryService;
 use App\Services\FieldDataSummaryService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -24,6 +25,7 @@ final class FieldController extends Controller
         private readonly Field $field,
         private readonly Crop $crop,
         private readonly FieldDataSummaryService $fieldDataSummary,
+        private readonly FieldAnalyticsSummaryService $fieldAnalyticsSummary,
     ) {}
 
     public function index(Request $request): Response
@@ -78,6 +80,8 @@ final class FieldController extends Controller
             props: [
                 'field' => FieldResource::make(resource: $field)->resolve(),
                 ...$this->fieldDataSummary->summarize(field: $field),
+                ...$this->fieldAnalyticsSummary->summarize(field: $field),
+                'sensitivities' => ['low', 'medium', 'high'],
             ]
         );
     }
@@ -150,8 +154,8 @@ final class FieldController extends Controller
         $this->authorize('view', $field);
 
         return redirect()->route(
-            route: 'analytics.index',
-            parameters: ['filter[field_id]' => $field->id],
+            route: 'fields.show',
+            parameters: ['field' => $field, 'tab' => 'analytics'],
         );
     }
 }
