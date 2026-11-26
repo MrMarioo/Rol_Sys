@@ -11,7 +11,7 @@
                         <th>Date</th>
                         <th>Type</th>
                         <th>Value</th>
-                        <th></th>
+                        <th><span class="visually-hidden">Actions</span></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -20,8 +20,12 @@
                         <td>{{ reading.label }}</td>
                         <td>{{ reading.display }}</td>
                         <td class="text-end">
-                            <Link :href="route('field-data.show', reading.id)" class="btn btn-sm btn-icon btn-trigger">
-                                <em class="icon ni ni-chevron-right"></em>
+                            <Link
+                                :href="route('field-data.show', reading.id)"
+                                class="btn btn-sm btn-icon btn-trigger"
+                                :aria-label="`View ${reading.label} reading from ${reading.date}`"
+                            >
+                                <em class="icon ni ni-chevron-right" aria-hidden="true"></em>
                             </Link>
                         </td>
                     </tr>

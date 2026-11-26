@@ -30,11 +30,6 @@
     display: block;
     height: $gutter-width;
 }
-@each $size, $length in $spacers {
-    .gap-#{$size} {
-        height: $length;
-    }
-}
 
 $gaps: sm 0.75rem, md 1.25rem, lg 2rem, xl 2.5rem;
 @each $gap, $size in $gaps {

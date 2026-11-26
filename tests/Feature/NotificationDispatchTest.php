@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Exceptions\AiServiceException;
 use App\Jobs\AnalyzeFieldDataJob;
 use App\Models\Field;
 use App\Models\FieldData;
@@ -10,6 +11,7 @@ use App\Models\User;
 use App\Notifications\AnalysisCompleted;
 use App\Notifications\AnalysisFailed;
 use App\Notifications\ReportGenerated;
+use App\Services\AiAnalysisClient;
 use App\Services\FieldAnalysisService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\ConnectionException;
@@ -68,7 +70,7 @@ class NotificationDispatchTest extends TestCase
         Http::fake(['*' => Http::response(['recommendations' => []], 200)]);
         $fieldData = $this->fieldData();
 
-        (new AnalyzeFieldDataJob($fieldData))->handle();
+        (new AnalyzeFieldDataJob($fieldData))->handle(app(AiAnalysisClient::class));
 
         Notification::assertSentTo($fieldData->field->user, AnalysisCompleted::class);
     }
@@ -80,7 +82,7 @@ class NotificationDispatchTest extends TestCase
 
         try {
             AnalyzeFieldDataJob::dispatch($fieldData);
-        } catch (ConnectionException) {
+        } catch (AiServiceException) {
         }
 
         Notification::assertSentToTimes($fieldData->field->user, AnalysisFailed::class, 1);
@@ -99,7 +101,9 @@ class NotificationDispatchTest extends TestCase
     {
         $job = new AnalyzeFieldDataJob($this->fieldData());
 
-        $this->assertGreaterThan(AnalyzeFieldDataJob::HTTP_TIMEOUT, $job->timeout);
+        $maxHttpTime = config('services.ai.timeout') + config('services.ai.connect_timeout');
+
+        $this->assertGreaterThan($maxHttpTime, $job->timeout);
         $this->assertLessThan(config('queue.connections.redis.retry_after'), $job->timeout);
         $this->assertLessThan(config('queue.connections.database.retry_after'), $job->timeout);
     }

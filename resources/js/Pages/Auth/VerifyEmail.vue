@@ -26,37 +26,32 @@ const verificationLinkSent = computed(() => props.status === 'verification-link-
             <AuthenticationCardLogo />
         </template>
 
-        <div class="mb-4 text-sm text-gray-600">
-            Before continuing, could you verify your email address by clicking on the link we just emailed to you? If you didn't receive the email, we will gladly send you another.
+        <div class="nk-block-head">
+            <div class="nk-block-head-content">
+                <h4 class="nk-block-title">Verify your email</h4>
+                <div class="nk-block-des">
+                    <p>Before continuing, could you verify your email address by clicking on the link we just emailed to you? If you didn't receive the email, we will gladly send you another.</p>
+                </div>
+            </div>
         </div>
 
-        <div v-if="verificationLinkSent" class="mb-4 font-medium text-sm text-green-600">
+        <div v-if="verificationLinkSent" class="alert alert-success">
             A new verification link has been sent to the email address you provided in your profile settings.
         </div>
 
         <form @submit.prevent="submit">
-            <div class="mt-4 flex items-center justify-between">
-                <PrimaryButton :class="{ 'opacity-25': form.processing }" :disabled="form.processing">
-                    Resend Verification Email
-                </PrimaryButton>
-
-                <div>
-                    <Link
-                        :href="route('profile.show')"
-                        class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                    >
-                        Edit Profile</Link>
-
-                    <Link
-                        :href="route('logout')"
-                        method="post"
-                        as="button"
-                        class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ms-2"
-                    >
-                        Log Out
-                    </Link>
-                </div>
-            </div>
+            <PrimaryButton class="btn-lg w-100 justify-content-center" :disabled="form.processing">
+                Resend Verification Email
+            </PrimaryButton>
         </form>
+
+        <div class="d-flex justify-content-center align-items-center gap-3 pt-4">
+            <Link :href="route('profile.show')" class="btn btn-link btn-sm p-0">
+                Edit Profile
+            </Link>
+            <Link :href="route('logout')" method="post" as="button" class="btn btn-link btn-sm p-0">
+                Log Out
+            </Link>
+        </div>
     </AuthenticationCard>
 </template>

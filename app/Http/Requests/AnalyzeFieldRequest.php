@@ -4,7 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class AnalyzeFieldRequest extends FormRequest
+final class AnalyzeFieldRequest extends FormRequest
 {
     public function authorize(): bool
     {

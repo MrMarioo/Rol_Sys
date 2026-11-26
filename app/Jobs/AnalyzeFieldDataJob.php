@@ -6,43 +6,40 @@ use App\Models\Analytics;
 use App\Models\FieldData;
 use App\Notifications\AnalysisCompleted;
 use App\Notifications\AnalysisFailed;
+use App\Services\AiAnalysisClient;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use RuntimeException;
 use Throwable;
 
-class AnalyzeFieldDataJob implements ShouldQueue
+final class AnalyzeFieldDataJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
-
-    public const HTTP_TIMEOUT = 75;
+    use Dispatchable;
+    use InteractsWithQueue;
+    use Queueable;
+    use SerializesModels;
 
     public int $timeout = 85;
 
     public function __construct(
-        public FieldData $fieldData
+        public FieldData $fieldData,
     ) {}
 
-    public function handle(): void
+    public function handle(AiAnalysisClient $aiClient): void
     {
-        $response = Http::timeout(self::HTTP_TIMEOUT)
-            ->post('http://ai-service:5000/analyze/field/' . $this->fieldData->field_id, [
+        $results = $aiClient->analyzeField(
+            fieldId: $this->fieldData->field_id,
+            payload: [
                 'field_data' => [$this->fieldData->toArray()],
-                'parameters' => ['sensitivity' => 'medium']
-            ]);
+                'parameters' => ['sensitivity' => 'medium'],
+            ],
+        );
 
-        if (! $response->successful()) {
-            throw new RuntimeException(sprintf('AI service returned %d', $response->status()));
-        }
-
-        $results = $response->json();
-
-        $analytics = Analytics::create([
+        /** @var Analytics $analytics */
+        $analytics = Analytics::query()->create(attributes: [
             'field_id' => $this->fieldData->field_id,
             'analysis_type' => 'auto_analysis',
             'analysis_date' => now(),
@@ -51,18 +48,21 @@ class AnalyzeFieldDataJob implements ShouldQueue
             'parameters' => [
                 'triggered_by' => 'new_field_data',
                 'data_id' => $this->fieldData->id,
-                'auto_generated' => true
-            ]
+                'auto_generated' => true,
+            ],
         ]);
 
-        $this->fieldData->field?->user?->notify(new AnalysisCompleted($analytics));
+        $this->fieldData->field->user->notify(new AnalysisCompleted(analytics: $analytics));
     }
 
     public function failed(Throwable $exception): void
     {
-        Log::error('AI Analysis Job failed: ' . $exception->getMessage());
+        Log::error('Automatic field data analysis failed', [
+            'field_data_id' => $this->fieldData->id,
+            'message' => $exception->getMessage(),
+        ]);
 
         $field = $this->fieldData->field;
-        $field?->user?->notify(new AnalysisFailed($field));
+        $field->user->notify(new AnalysisFailed(field: $field));
     }
 }

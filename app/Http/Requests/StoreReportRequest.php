@@ -2,33 +2,29 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\ReportType;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 
-class StoreReportRequest extends FormRequest
+final class StoreReportRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return Auth::check();
+        return $this->user() !== null;
     }
 
     public function rules(): array
     {
         return [
             'title' => ['required', 'string', 'max:255'],
-            'type' => ['required', 'string', 'in:weekly_summary,monthly_summary,problem_report,crop_status,comparative'],
+            'type' => ['required', Rule::enum(type: ReportType::class)],
             'description' => ['nullable', 'string'],
             'fields_included' => ['required', 'array', 'min:1'],
-            'fields_included.*' => ['integer', 'exists:fields,id'],
+            'fields_included.*' => [
+                'integer',
+                Rule::exists(table: 'fields', column: 'id')->where('user_id', $this->user()->id),
+            ],
             'parameters' => ['required', 'array'],
-            'content' => ['nullable', 'array'],
         ];
-    }
-
-    public function prepareForValidation(): void
-    {
-        $this->merge([
-            'content' => $this->input('content', []),
-        ]);
     }
 }

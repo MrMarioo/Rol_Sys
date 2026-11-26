@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 /**
  * @extends Factory<FieldData>
  */
-class FieldDataFactory extends Factory
+final class FieldDataFactory extends Factory
 {
     protected $model = FieldData::class;
 

@@ -7,7 +7,6 @@ import InputError from '@/Components/InputError.vue';
 import InputLabel from '@/Components/InputLabel.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import TextInput from '@/Components/TextInput.vue';
-import MicrosoftIcon from "@/Components/Icons/MicrosoftIcon.vue";
 
 defineProps({
     canResetPassword: Boolean,
@@ -35,55 +34,66 @@ const submit = () => {
 
     <AuthenticationCard>
         <template #logo>
-            <AuthenticationCardLogo :styles="'size-64'" />
+            <AuthenticationCardLogo />
         </template>
 
-        <div v-if="status" class="mb-4 font-medium text-sm text-green-600">
+        <div class="nk-block-head">
+            <div class="nk-block-head-content">
+                <h4 class="nk-block-title">Sign in</h4>
+                <div class="nk-block-des">
+                    <p>Access your fields and analytics with your email and password.</p>
+                </div>
+            </div>
+        </div>
+
+        <div v-if="status" class="alert alert-success">
             {{ status }}
         </div>
 
         <form @submit.prevent="submit">
-            <div>
+            <div class="form-group">
                 <InputLabel for="email" value="Email" />
                 <TextInput
                     id="email"
                     v-model="form.email"
                     type="email"
-                    class="mt-1 block w-full"
+                    class="form-control-lg"
                     required
                     autofocus
                     autocomplete="username"
                 />
-                <InputError class="mt-2" :message="form.errors.email" />
+                <InputError class="mt-1" :message="form.errors.email" />
             </div>
 
-            <div class="mt-4">
-                <InputLabel for="password" value="Password" />
+            <div class="form-group">
+                <div class="d-flex justify-content-between align-items-center">
+                    <InputLabel for="password" value="Password" />
+                    <Link v-if="canResetPassword" :href="route('password.request')" class="small mb-2">
+                        Forgot your password?
+                    </Link>
+                </div>
                 <TextInput
                     id="password"
                     v-model="form.password"
                     type="password"
-                    class="mt-1 block w-full"
+                    class="form-control-lg"
                     required
                     autocomplete="current-password"
                 />
-                <InputError class="mt-2" :message="form.errors.password" />
+                <InputError class="mt-1" :message="form.errors.password" />
             </div>
 
-            <div class="block mt-4">
-                <label class="flex items-center">
-                    <Checkbox v-model:checked="form.remember" name="remember" />
-                    <span class="ms-2 text-sm text-gray-600">Remember me</span>
-                </label>
+            <div class="form-group">
+                <div class="form-check">
+                    <Checkbox id="remember" v-model:checked="form.remember" name="remember" />
+                    <label class="form-check-label" for="remember">Remember me</label>
+                </div>
             </div>
 
-            <div class="flex items-center justify-end mt-4">
-                <Link v-if="canResetPassword" :href="route('password.request')" class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                    Forgot your password?
-                </Link>
-            </div>
-            <div class="flex flex-col space-y-4">
-                <PrimaryButton class="w-full justify-center bg-blue-500 hover:bg-blue-600">Sign in</PrimaryButton>
+            <div class="form-group mb-0">
+                <PrimaryButton class="btn-lg w-100 justify-content-center" :disabled="form.processing">
+                    Sign in
+                </PrimaryButton>
             </div>
         </form>
     </AuthenticationCard>

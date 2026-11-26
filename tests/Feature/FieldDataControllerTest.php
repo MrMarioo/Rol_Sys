@@ -72,4 +72,80 @@ class FieldDataControllerTest extends TestCase
             ->get(route('field-data.index', ['filter' => ['search' => 'a,b']]))
             ->assertOk();
     }
+
+    public function test_store_saves_reading_for_owned_field(): void
+    {
+        $user = User::factory()->create();
+        $field = Field::factory()->for($user)->create();
+
+        $this->actingAs($user)
+            ->post(route('field-data.store'), [
+                'field_id' => $field->id,
+                'collection_date' => '2026-05-01',
+                'data_type' => 'soil_moisture',
+                'data_json' => json_encode(['moisture_values' => [0.4, 0.5]]),
+            ])
+            ->assertRedirect(route('field-data.index'))
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseHas('field_data', ['field_id' => $field->id, 'data_type' => 'soil_moisture']);
+    }
+
+    public function test_store_rejects_foreign_field_and_unknown_type(): void
+    {
+        $user = User::factory()->create();
+        $foreignField = Field::factory()->create();
+
+        $this->actingAs($user)
+            ->post(route('field-data.store'), [
+                'field_id' => $foreignField->id,
+                'collection_date' => '2026-05-01',
+                'data_type' => 'radiation',
+                'data_json' => json_encode(['value' => 1]),
+            ])
+            ->assertSessionHasErrors(['field_id', 'data_type']);
+
+        $this->assertDatabaseCount('field_data', 0);
+    }
+
+    public function test_owner_can_update_and_destroy_reading(): void
+    {
+        $user = User::factory()->create();
+        $field = Field::factory()->for($user)->create();
+        $reading = FieldData::factory()->create(['field_id' => $field->id]);
+
+        $this->actingAs($user)
+            ->put(route('field-data.update', $reading), [
+                'field_id' => $field->id,
+                'collection_date' => '2026-06-01',
+                'data_type' => 'temperature',
+                'data' => ['value' => 21.5],
+            ])
+            ->assertRedirect(route('field-data.index'));
+        $this->assertSame('temperature', $reading->fresh()->data_type);
+
+        $this->actingAs($user)
+            ->delete(route('field-data.destroy', $reading))
+            ->assertRedirect(route('field-data.index'));
+        $this->assertDatabaseMissing('field_data', ['id' => $reading->id]);
+    }
+
+    public function test_other_user_cannot_update_or_destroy_reading(): void
+    {
+        $reading = FieldData::factory()->create();
+        $intruder = User::factory()->create();
+        $intruderField = Field::factory()->for($intruder)->create();
+
+        $this->actingAs($intruder)
+            ->put(route('field-data.update', $reading), [
+                'field_id' => $intruderField->id,
+                'collection_date' => '2026-06-01',
+                'data_type' => 'ndvi',
+                'data' => ['ndvi_values' => [0.5]],
+            ])
+            ->assertForbidden();
+
+        $this->actingAs($intruder)->delete(route('field-data.destroy', $reading))->assertForbidden();
+        $this->assertDatabaseHas('field_data', ['id' => $reading->id, 'field_id' => $reading->field_id]);
+    }
 }

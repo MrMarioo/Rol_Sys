@@ -134,4 +134,80 @@ class FieldControllerTest extends TestCase
             ->get(route('fields.analytics', $field))
             ->assertRedirect(route('fields.show', ['field' => $field, 'tab' => 'analytics']));
     }
+
+    public function test_store_creates_field_for_authenticated_user(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->post(route('fields.store'), [
+                'name' => 'South meadow',
+                'size' => 4.25,
+                'status' => 'active',
+                'boundaries' => [[19.0, 52.0], [19.01, 52.0], [19.01, 52.01], [19.0, 52.0]],
+            ])
+            ->assertRedirect(route('fields.index'))
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseHas('fields', ['name' => 'South meadow', 'user_id' => $user->id]);
+    }
+
+    public function test_store_rejects_unknown_status_and_foreign_user_id(): void
+    {
+        $user = User::factory()->create();
+        $other = User::factory()->create();
+
+        $this->actingAs($user)
+            ->post(route('fields.store'), [
+                'name' => 'Bad status',
+                'size' => 1,
+                'status' => 'flooded',
+                'boundaries' => [[19.0, 52.0], [19.01, 52.0], [19.01, 52.01], [19.0, 52.0]],
+                'user_id' => $other->id,
+            ])
+            ->assertSessionHasErrors('status');
+
+        $this->actingAs($user)
+            ->post(route('fields.store'), [
+                'name' => 'Owned',
+                'size' => 1,
+                'status' => 'active',
+                'boundaries' => [[19.0, 52.0], [19.01, 52.0], [19.01, 52.01], [19.0, 52.0]],
+                'user_id' => $other->id,
+            ]);
+
+        $this->assertDatabaseHas('fields', ['name' => 'Owned', 'user_id' => $user->id]);
+    }
+
+    public function test_update_and_destroy_forbid_other_users_field(): void
+    {
+        $field = Field::factory()->create();
+        $intruder = User::factory()->create();
+
+        $this->actingAs($intruder)
+            ->put(route('fields.update', $field), ['name' => 'Hijacked'])
+            ->assertForbidden();
+
+        $this->actingAs($intruder)
+            ->delete(route('fields.destroy', $field))
+            ->assertForbidden();
+
+        $this->assertDatabaseHas('fields', ['id' => $field->id]);
+    }
+
+    public function test_owner_can_update_and_destroy_field(): void
+    {
+        $user = User::factory()->create();
+        $field = Field::factory()->for($user)->create();
+
+        $this->actingAs($user)
+            ->put(route('fields.update', $field), ['name' => 'Renamed'])
+            ->assertRedirect(route('fields.show', $field));
+        $this->assertDatabaseHas('fields', ['id' => $field->id, 'name' => 'Renamed']);
+
+        $this->actingAs($user)
+            ->delete(route('fields.destroy', $field))
+            ->assertRedirect(route('fields.index'));
+        $this->assertDatabaseMissing('fields', ['id' => $field->id]);
+    }
 }

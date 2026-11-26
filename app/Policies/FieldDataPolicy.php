@@ -5,7 +5,7 @@ namespace App\Policies;
 use App\Models\FieldData;
 use App\Models\User;
 
-class FieldDataPolicy
+final class FieldDataPolicy
 {
     public function viewAny(User $user): bool
     {

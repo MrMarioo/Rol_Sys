@@ -1,65 +1,40 @@
-<script>
-import { Head, Link } from '@inertiajs/vue3';
+<script setup>
+import { Head, Link, router } from '@inertiajs/vue3';
+import { ref } from 'vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import FieldStatusBadge from '@/Components/FieldStatusBadge.vue';
 import Pagination from '@/Components/Pagination.vue';
-import SearchForm from './SearchForm.vue';
+import SearchForm from '@/Components/Field/SearchForm.vue';
+import CreateFieldModal from '@/Components/Field/CreateFieldModal.vue';
 import { ConfirmModal } from '@/Helpers';
-import { router } from '@inertiajs/vue3';
-import CreateForm from '@/Pages/Field/CreateForm.vue';
-import { ref } from 'vue';
 
-export default {
-    layout: AppLayout,
-    components: {
-        CreateForm,
-        Pagination,
-        Head,
-        Link,
-        FieldStatusBadge,
-        SearchForm,
-    },
-    props: {
-        fields: Object,
-        statuses: Array,
-        crops: Array,
-    },
-    setup() {
-        const createFormRef = ref(null);
+defineOptions({ layout: AppLayout });
 
-        const openCreateForm = () => {
-            if (createFormRef.value) {
-                createFormRef.value.openModal();
-            }
-        };
+defineProps({
+    fields: Object,
+    statuses: Array,
+    crops: Array,
+});
 
-        return {
-            createFormRef,
-            openCreateForm,
-        };
-    },
-    methods: {
-        deleteField(fieldId) {
-            ConfirmModal.fire({
-                title: 'Delete Field',
-                text: 'Are you sure you want to delete this field?',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#3085d6',
-                cancelButtonColor: '#d33',
-                confirmButtonText: 'Yes, delete it!',
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    router.delete(route('fields.destroy', fieldId), {
-                        preserveScroll: true,
-                    });
-                }
-            });
-        },
-        refreshFields() {
-            router.reload({ only: ['fields'] });
-        },
-    },
+const createModalRef = ref(null);
+
+const openCreateModal = () => {
+    createModalRef.value?.openModal();
+};
+
+const deleteField = async (fieldId) => {
+    const { isConfirmed } = await ConfirmModal.fire({
+        icon: 'warning',
+        title: 'Delete Field',
+        text: 'Are you sure you want to delete this field?',
+        confirmButtonText: 'Yes, delete',
+    });
+
+    if (!isConfirmed) return;
+
+    router.delete(route('fields.destroy', fieldId), {
+        preserveScroll: true,
+    });
 };
 </script>
 
@@ -76,7 +51,7 @@ export default {
             </div>
             <div class="nk-block-head-content">
                 <div class="toggle-wrap nk-block-tools-toggle">
-                    <button @click="openCreateForm" class="btn btn-primary">
+                    <button type="button" class="btn btn-primary" @click="openCreateModal">
                         <em class="icon ni ni-plus"></em>
                         <span>Add Field</span>
                     </button>
@@ -85,13 +60,12 @@ export default {
         </div>
     </div>
 
-    <CreateForm ref="createFormRef" :crops="crops" :statuses="statuses" @field-created="refreshFields" />
+    <CreateFieldModal ref="createModalRef" :crops="crops" :statuses="statuses" />
 
     <div class="nk-block">
         <div class="card card-stretch">
             <div class="card-inner-group">
                 <div class="card-inner">
-                    <!-- Search Form -->
                     <SearchForm :statuses="statuses" :crops="crops" />
                 </div>
 
@@ -102,7 +76,7 @@ export default {
                         </div>
                         <h5 class="nk-data-empty-title">No fields found</h5>
                         <p class="nk-data-empty-note">Try changing your search criteria or add a new field.</p>
-                        <button @click="openCreateForm" class="btn btn-primary">
+                        <button type="button" class="btn btn-primary" @click="openCreateModal">
                             <em class="icon ni ni-plus"></em>
                             <span>Add Field</span>
                         </button>
@@ -120,7 +94,6 @@ export default {
                             <div class="nk-tb-col tb-col-md"><span>Status</span></div>
                             <div class="nk-tb-col nk-tb-col-tools"></div>
                         </div>
-                        <!-- .nk-tb-item -->
                         <div v-for="(field, index) in fields.data" :key="field.id" class="nk-tb-item">
                             <div class="nk-tb-col">
                                 <span class="tb-lead">{{ fields.from + index }}</span>
@@ -149,9 +122,14 @@ export default {
                                 <ul class="nk-tb-actions gx-1">
                                     <li>
                                         <div class="drodown">
-                                            <a href="#" class="dropdown-toggle btn btn-icon btn-trigger" data-bs-toggle="dropdown">
+                                            <button
+                                                type="button"
+                                                class="dropdown-toggle btn btn-icon btn-trigger"
+                                                data-bs-toggle="dropdown"
+                                                aria-label="Actions"
+                                            >
                                                 <em class="icon ni ni-more-h"></em>
-                                            </a>
+                                            </button>
                                             <div class="dropdown-menu dropdown-menu-end">
                                                 <ul class="link-list-opt no-bdr">
                                                     <li>
@@ -180,10 +158,10 @@ export default {
                                                     </li>
                                                     <li class="divider"></li>
                                                     <li>
-                                                        <a href="#" @click.prevent="deleteField(field.id)">
+                                                        <button type="button" @click="deleteField(field.id)">
                                                             <em class="icon ni ni-trash"></em>
                                                             <span>Delete</span>
-                                                        </a>
+                                                        </button>
                                                     </li>
                                                 </ul>
                                             </div>
@@ -195,7 +173,6 @@ export default {
                     </div>
                 </div>
 
-                <!-- Pagination -->
                 <div class="card-inner pb-3 pt-3">
                     <div class="d-flex justify-content-center">
                         <Pagination :links="fields.links" />

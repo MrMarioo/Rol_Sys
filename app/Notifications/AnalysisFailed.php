@@ -5,7 +5,7 @@ namespace App\Notifications;
 use App\Models\Field;
 use Illuminate\Notifications\Notification;
 
-class AnalysisFailed extends Notification
+final class AnalysisFailed extends Notification
 {
     public function __construct(
         public readonly Field $field,
@@ -19,13 +19,13 @@ class AnalysisFailed extends Notification
     public function toArray(object $notifiable): array
     {
         return [
-            'title' => 'Analiza AI nie powiodła się',
+            'title' => 'AI analysis failed',
             'message' => sprintf(
-                'Nie udało się przeanalizować pola %s. Spróbuj ponownie później.',
+                'Field %s could not be analysed. Please try again later.',
                 $this->field->name,
             ),
             'level' => 'danger',
-            'url' => route('fields.analytics', $this->field->id, false),
+            'url' => route(name: 'fields.analytics', parameters: $this->field->id, absolute: false),
         ];
     }
 }

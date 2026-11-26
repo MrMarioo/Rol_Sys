@@ -1,104 +1,101 @@
 <template>
-    <div class="nk-app-root">
+    <div class="nk-app-root has-aside">
         <Head :title="title" />
-        <!-- main @s -->
         <div class="nk-main">
-            <!-- wrap @s -->
             <div class="nk-wrap">
                 <div class="nk-header nk-header-fixed is-light">
                     <div class="container-lg wide-xl">
                         <div class="nk-header-wrap">
                             <div class="nk-header-brand">
-                                <a href="/public" class="logo-link">
-                                    <AuthenticationCardLogo styles="size-16" color="gray" />
-                                </a>
+                                <AuthenticationCardLogo class="logo-link" styles="app-logo" color="gray" />
                             </div>
-                            <!-- .nk-header-brand -->
                             <div class="nk-header-tools">
                                 <ul class="nk-quick-nav">
                                     <li class="dropdown user-dropdown">
-                                        <a href="#" class="dropdown-toggle" data-bs-toggle="dropdown">
+                                        <button type="button" class="dropdown-toggle btn-reset" data-bs-toggle="dropdown" aria-label="Account menu">
                                             <div class="user-toggle">
                                                 <div class="user-avatar sm">
                                                     <em class="icon ni ni-user-alt"></em>
                                                 </div>
-                                                <div class="user-name dropdown-indicator d-none d-sm-block">{{ user?.name }}</div>
+                                                <div class="user-name dropdown-indicator d-none d-sm-block">{{ currentUser?.name }}</div>
                                             </div>
-                                        </a>
+                                        </button>
                                         <div class="dropdown-menu dropdown-menu-md dropdown-menu-end dropdown-menu-s1">
                                             <div class="dropdown-inner user-card-wrap bg-lighter d-none d-md-block">
                                                 <div class="user-card">
                                                     <div class="user-avatar">
-                                                        <span>AB</span>
+                                                        <span>{{ initials }}</span>
                                                     </div>
                                                     <div class="user-info">
-                                                        <span class="lead-text">{{ user?.name }}</span>
-                                                        <span class="sub-text">{{ user?.email }}</span>
+                                                        <span class="lead-text">{{ currentUser?.name }}</span>
+                                                        <span class="sub-text">{{ currentUser?.email }}</span>
                                                     </div>
                                                     <div class="user-action">
-                                                        <a class="btn btn-icon me-n2" href="#"><em class="icon ni ni-setting"></em></a>
+                                                        <Link class="btn btn-icon me-n2" :href="route('profile.show')" aria-label="Profile settings">
+                                                            <em class="icon ni ni-setting"></em>
+                                                        </Link>
                                                     </div>
                                                 </div>
                                             </div>
                                             <div class="dropdown-inner">
                                                 <ul class="link-list">
-                                                    <!--                                                    <li>-->
-                                                    <!--                                                        <Link href="/user/profile">-->
-                                                    <!--                                                            <em class="icon ni ni-user-alt"></em>-->
-                                                    <!--                                                            <span>View Profile</span>-->
-                                                    <!--                                                        </Link>-->
-                                                    <!--                                                    </li>-->
-                                                    <!--                                                    <li>-->
-                                                    <!--                                                        <Link href="/dashboard/login-activity">-->
-                                                    <!--                                                            <em class="icon ni ni-activity-alt"></em>-->
-                                                    <!--                                                            <span>Login Activity</span>-->
-                                                    <!--                                                        </Link>-->
-                                                    <!--                                                    </li>-->
-                                                    <!-- <li><Link href="/dashboard/subscription"><em class="icon ni ni-sign-gbp"></em><span>Pricing</span></Link></li> -->
                                                     <li>
-                                                        <a class="dark-switch" :class="{ active: theme == 'dark' }" @click="toggleTheme" href="#">
+                                                        <Link :href="route('profile.show')">
+                                                            <em class="icon ni ni-user-alt"></em>
+                                                            <span>Profile</span>
+                                                        </Link>
+                                                    </li>
+                                                    <li>
+                                                        <button type="button" class="dark-switch btn-reset" :class="{ active: isDark }" @click="toggleTheme">
                                                             <em class="icon ni ni-moon"></em>
                                                             <span>Dark Mode</span>
-                                                        </a>
+                                                        </button>
                                                     </li>
                                                 </ul>
                                             </div>
                                             <div class="dropdown-inner">
                                                 <ul class="link-list">
                                                     <li>
-                                                        <a href="#" @click="logOut">
+                                                        <button type="button" class="btn-reset" @click="logOut">
                                                             <em class="icon ni ni-signout"></em>
                                                             <span>Sign out</span>
-                                                        </a>
+                                                        </button>
                                                     </li>
                                                 </ul>
                                             </div>
                                         </div>
                                     </li>
-                                    <!-- .dropdown -->
                                     <li class="dropdown notification-dropdown">
-                                        <a href="#" class="dropdown-toggle nk-quick-nav-icon me-lg-n1 position-relative" data-bs-toggle="dropdown">
+                                        <button
+                                            type="button"
+                                            class="dropdown-toggle nk-quick-nav-icon me-lg-n1 position-relative btn-reset"
+                                            data-bs-toggle="dropdown"
+                                            :aria-label="unreadCount > 0 ? `Notifications, ${unreadCount} unread` : 'Notifications'"
+                                        >
                                             <div :class="['icon-status', unreadCount > 0 ? 'icon-status-danger' : 'icon-status-info']">
                                                 <em class="icon ni ni-bell"></em>
                                             </div>
                                             <span v-if="unreadCount > 0" class="badge rounded-pill bg-danger notification-badge">
                                                 {{ unreadCount > 99 ? '99+' : unreadCount }}
                                             </span>
-                                        </a>
+                                        </button>
                                         <div class="dropdown-menu dropdown-menu-xl dropdown-menu-end dropdown-menu-s1">
                                             <div class="dropdown-head">
                                                 <span class="sub-title nk-dropdown-title">Notifications</span>
-                                                <a v-if="unreadCount > 0" href="#" @click.prevent="markAllNotificationsAsRead">Mark All as Read</a>
+                                                <button v-if="unreadCount > 0" type="button" class="btn-reset link-primary" @click="markAllNotificationsAsRead">
+                                                    Mark All as Read
+                                                </button>
                                             </div>
                                             <div class="dropdown-body">
                                                 <div class="nk-notification">
                                                     <div v-if="latestNotifications.length === 0" class="nk-notification-item dropdown-inner text-soft">
                                                         No notifications
                                                     </div>
-                                                    <div
+                                                    <button
                                                         v-for="notification in latestNotifications"
                                                         :key="notification.id"
-                                                        class="nk-notification-item dropdown-inner notification-row"
+                                                        type="button"
+                                                        class="nk-notification-item dropdown-inner notification-row btn-reset"
                                                         :class="{ 'is-unread': !notification.read }"
                                                         @click="openNotification(notification)"
                                                     >
@@ -112,7 +109,7 @@
                                                             </div>
                                                             <div class="nk-notification-time">{{ notification.created_at }}</div>
                                                         </div>
-                                                    </div>
+                                                    </button>
                                                 </div>
                                             </div>
                                             <div class="dropdown-foot justify-center">
@@ -120,42 +117,21 @@
                                             </div>
                                         </div>
                                     </li>
-                                    <!-- .dropdown -->
                                     <li class="d-lg-none dropdown">
-                                        <a href="#" class="dropdown-toggle nk-quick-nav-icon p-2" data-bs-toggle="dropdown">
+                                        <button type="button" class="dropdown-toggle nk-quick-nav-icon p-2 btn-reset" data-bs-toggle="dropdown" aria-label="Main menu">
                                             <em class="icon ni ni-menu"></em>
-                                        </a>
+                                        </button>
                                         <div class="dropdown-menu dropdown-menu-end dropdown-menu-lg">
                                             <div class="dropdown-inner">
                                                 <ul class="link-list-plain">
-                                                    <li>
-                                                        <Link href="/" class="dropdown-item d-flex align-items-center">
-                                                            <em class="icon ni ni-dashboard me-2"></em>
-                                                            <span>Dashboard</span>
-                                                        </Link>
-                                                    </li>
-                                                    <li>
-                                                        <Link href="/fields" class="dropdown-item d-flex align-items-center">
-                                                            <em class="icon ni map me-2"></em>
-                                                            <span>Fields</span>
-                                                        </Link>
-                                                    </li>
-                                                    <li>
-                                                        <Link href="/field-data" class="dropdown-item d-flex align-items-center">
-                                                            <em class="icon ni ni-server me-2"></em>
-                                                            <span>Fields Data</span>
-                                                        </Link>
-                                                    </li>
-                                                    <li>
-                                                        <Link href="/analytics" class="dropdown-item d-flex align-items-center">
-                                                            <em class="icon ni growth me-2"></em>
-                                                            <span>Analytics</span>
-                                                        </Link>
-                                                    </li>
-                                                    <li>
-                                                        <Link href="/reports" class="dropdown-item d-flex align-items-center">
-                                                            <em class="icon ni files me-2"></em>
-                                                            <span>Reports</span>
+                                                    <li v-for="item in menu" :key="item.route">
+                                                        <Link
+                                                            :href="route(item.route)"
+                                                            class="dropdown-item d-flex align-items-center"
+                                                            :class="{ active: isActive(item) }"
+                                                        >
+                                                            <em class="icon ni me-2" :class="item.icon"></em>
+                                                            <span>{{ item.label }}</span>
                                                         </Link>
                                                     </li>
                                                 </ul>
@@ -163,264 +139,118 @@
                                         </div>
                                     </li>
                                 </ul>
-                                <!-- .nk-quick-nav -->
                             </div>
-                            <!-- .nk-header-tools -->
                         </div>
-                        <!-- .nk-header-wrap -->
                     </div>
-                    <!-- .container-fliud -->
                 </div>
-                <!-- main header @e -->
-                <!-- content @s -->
                 <div class="nk-content">
                     <div class="wide-xl container">
                         <div class="nk-content-inner">
-                            <div class="nk-aside" data-content="sideNav" data-toggle-overlay="true" data-toggle-screen="lg" data-toggle-body="true">
-                                <div class="nk-sidebar-menu" data-simplebar>
-                                    <!-- Menu -->
+                            <nav class="nk-aside" aria-label="Main">
+                                <div class="nk-sidebar-menu">
                                     <ul class="nk-menu">
                                         <li class="nk-menu-heading">
                                             <h6 class="overline-title">Menu</h6>
                                         </li>
-                                        <li class="nk-menu-item">
-                                            <Link href="/" class="nk-menu-link">
-                                                <span class="nk-menu-icon"><em class="icon ni ni-dashboard"></em></span>
-                                                <span class="nk-menu-text">Dashboard</span>
+                                        <li v-for="item in menu" :key="item.route" class="nk-menu-item" :class="{ active: isActive(item) }">
+                                            <Link :href="route(item.route)" class="nk-menu-link" :aria-current="isActive(item) ? 'page' : undefined">
+                                                <span class="nk-menu-icon"><em class="icon ni" :class="item.icon"></em></span>
+                                                <span class="nk-menu-text">{{ item.label }}</span>
                                             </Link>
-                                        </li>
-                                        <li class="nk-menu-item">
-                                            <Link href="/fields" class="nk-menu-link">
-                                                <span class="nk-menu-icon"><em class="icon ni ni-map"></em></span>
-                                                <span class="nk-menu-text">Fields</span>
-                                            </Link>
-                                        </li>
-                                        <li class="nk-menu-item">
-                                            <Link href="/field-data" class="nk-menu-link">
-                                                <span class="nk-menu-icon"><em class="icon ni ni-server"></em></span>
-                                                <span class="nk-menu-text">Fields Data</span>
-                                            </Link>
-                                        </li>
-                                        <li class="nk-menu-item">
-                                            <Link href="/analytics" class="nk-menu-link">
-                                                <span class="nk-menu-icon"><em class="icon ni ni-growth"></em></span>
-                                                <span class="nk-menu-text">Analytics</span>
-                                            </Link>
-                                        </li>
-                                        <li class="nk-menu-item">
-                                            <Link href="/reports" class="nk-menu-link">
-                                                <span class="nk-menu-icon"><em class="icon ni ni-files"></em></span>
-                                                <span class="nk-menu-text">Reports</span>
-                                            </Link>
-                                        </li>
-                                        <!-- <li class="nk-menu-item">
-                                            <a href="html/subscription/profile-setting.html" class="nk-menu-link">
-                                                <span class="nk-menu-icon"><em class="icon ni ni-account-setting"></em></span>
-                                                <span class="nk-menu-text">Account Setting</span>
-                                            </a>
-                                        </li> -->
-                                    </ul>
-                                    <!-- Menu -->
-                                    <ul class="nk-menu nk-menu-sm" style="display: none">
-                                        <!-- Menu -->
-                                        <li class="nk-menu-heading">
-                                            <span>Help Center</span>
-                                        </li>
-                                        <li class="nk-menu-item">
-                                            <a href="html/subscription/faqs.html" class="nk-menu-link">
-                                                <span class="nk-menu-text">FAQs</span>
-                                            </a>
-                                        </li>
-                                        <li class="nk-menu-item">
-                                            <a href="html/subscription/contact.html" class="nk-menu-link">
-                                                <span class="nk-menu-text">Contact</span>
-                                            </a>
-                                        </li>
-                                        <li class="nk-menu-item">
-                                            <a href="html/subscription/support.html" class="nk-menu-link">
-                                                <span class="nk-menu-text">Support</span>
-                                            </a>
                                         </li>
                                     </ul>
                                 </div>
-                                <!-- .nk-sidebar-menu -->
-                                <div class="nk-aside-close">
-                                    <a href="#" class="toggle" data-target="sideNav"><em class="icon ni ni-cross"></em></a>
-                                </div>
-                                <!-- .nk-aside-close -->
-                            </div>
-                            <!-- .nk-aside -->
+                            </nav>
                             <div class="nk-content-body">
                                 <div class="nk-content-wrap">
-                                    <!-- <div class="nk-block-head nk-block-head-lg">
-                                        <div class="nk-block-between-md g-4">
-                                            <div class="nk-block-head-content">
-                                                <h2 class="nk-block-title fw-normal">Welcome, {{ user.name }}</h2>
-                                                    <div class="nk-block-des">
-                                                    </div>
-                                            </div>
-                                        </div>
-                                    </div> -->
-                                    <!-- .nk-block-head -->
-
                                     <slot></slot>
                                 </div>
-                                <!-- footer @s -->
                                 <div class="nk-footer">
                                     <div class="wide-xl container">
                                         <div class="nk-footer-wrap g-2">
                                             <div class="nk-footer-copyright">
-                                                Copyright &copy; 2024-{{ new Date().getFullYear() }} Mariusz Śmistek.
-                                            </div>
-                                            <div class="nk-footer-links">
-                                                <ul class="nav nav-sm"></ul>
+                                                Copyright &copy; 2024-{{ currentYear }} Mariusz Śmistek.
                                             </div>
                                         </div>
                                     </div>
                                 </div>
-                                <!-- footer @e -->
                             </div>
                         </div>
                     </div>
                 </div>
-                <!-- content @e -->
             </div>
-            <!-- wrap @e -->
         </div>
-        <!-- main @e -->
     </div>
-    <!-- app-root @e -->
 </template>
 
-<script>
+<script setup>
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
-import { computed, ref } from 'vue';
 import NotificationIcon from '@/Components/NotificationIcon.vue';
-import axios from 'axios';
 import AuthenticationCardLogo from '@/Components/AuthenticationCardLogo.vue';
-import { Dropdown } from 'bootstrap';
 
-export default {
-    props: {
-        title: String,
-        breadcrumbs: Array,
-        user: Object,
-    },
+const props = defineProps({
+    title: String,
+    user: Object,
+});
 
-    components: {
-        AuthenticationCardLogo,
-        Head,
-        Link,
-        NotificationIcon,
-    },
+const menu = [
+    { route: 'dashboard', pattern: 'dashboard', label: 'Dashboard', icon: 'ni-dashboard' },
+    { route: 'fields.index', pattern: 'fields.*', label: 'Fields', icon: 'ni-map' },
+    { route: 'field-data.index', pattern: 'field-data.*', label: 'Fields Data', icon: 'ni-server' },
+    { route: 'analytics.index', pattern: 'analytics.*', label: 'Analytics', icon: 'ni-growth' },
+    { route: 'reports.index', pattern: 'reports.*', label: 'Reports', icon: 'ni-files' },
+];
 
-    setup(props) {
-        document.querySelector('body').classList.add('nk-body');
-        document.querySelector('body').classList.add('bg-white');
-        document.querySelector('body').classList.add('npc-subscription');
-        document.querySelector('body').classList.add('has-aside');
-        document.querySelector('body').classList.add('nk-nio-theme');
-        document.querySelector('html').classList.remove('noauth');
-        document.querySelector('html').classList.add('authenticated');
+const page = usePage();
 
-        const theme = ref(document.querySelector('body').classList.contains('dark-mode') ? 'dark' : 'light');
-        const toggleTheme = () => {
-            document.querySelector('body').classList.contains('dark-mode')
-                ? document.querySelector('body').classList.remove('dark-mode')
-                : document.querySelector('body').classList.add('dark-mode');
-            theme.value = document.querySelector('body').classList.contains('dark-mode') ? 'dark' : 'light';
-        };
+const currentUser = computed(() => props.user ?? page.props.auth?.user);
 
-        const logOut = () => {
-            axios.post(route('logout'), {}).then((response) => {
-                window.location.href = '/';
-            });
-        };
+const initials = computed(() =>
+    (currentUser.value?.name ?? '')
+        .split(' ')
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((part) => part.charAt(0).toUpperCase())
+        .join(''),
+);
 
-        // document.documentElement.classList.add('h-auth')
+const currentYear = new Date().getFullYear();
 
-        const presentComingSoon = () => {
-            alert('This feature will be coming back soon! In the meantime, check out our address lists.');
-            return false;
-        };
+const isActive = (item) => route().current(item.pattern);
 
-        const toggleMobileMenu = () => {
-            const mobilMenu = document.querySelectorAll('[data-bs-toggle="dropdown"]');
-            if (mobilMenu) {
-                mobilMenu.classList.toggle('mobile-menu-active');
-            }
-        };
+const unreadCount = computed(() => page.props.notifications?.unread_count ?? 0);
+const latestNotifications = computed(() => page.props.notifications?.latest ?? []);
 
-        const page = usePage();
-        const unreadCount = computed(() => page.props.notifications?.unread_count ?? 0);
-        const latestNotifications = computed(() => page.props.notifications?.latest ?? []);
+const isDark = ref(document.body.classList.contains('dark-mode'));
 
-        const openNotification = (notification) => {
-            router.post(route('notifications.read', notification.id));
-        };
-
-        const markAllNotificationsAsRead = () => {
-            router.post(route('notifications.read-all'), {}, { preserveScroll: true });
-        };
-
-        return {
-            unreadCount,
-            latestNotifications,
-            openNotification,
-            markAllNotificationsAsRead,
-            theme,
-            logOut,
-            toggleTheme,
-            presentComingSoon,
-            toggleMobileMenu,
-        };
-    },
-    data() {
-        return {
-            notificationPoll: null,
-        };
-    },
-    mounted() {
-        this.notificationPoll = setInterval(() => {
-            if (!document.hidden) {
-                router.reload({ only: ['notifications'] });
-            }
-        }, 60000);
-
-        const dropdownElementList = document.querySelectorAll('[data-bs-toggle="dropdown"]');
-        dropdownElementList.forEach((item) => {
-            new Dropdown(item);
-        });
-        // const flash = this.$page.props.flash;
-        //
-        // if (flash.success) {
-        //     Swal.fire({
-        //         icon: 'success',
-        //         title: 'Success',
-        //         text: flash.success,
-        //         toast: true,
-        //         showConfirmButton: false,
-        //         position: 'top-end',
-        //         timer: 3000,
-        //     });
-        // }
-        //
-        // if (flash.error) {
-        //     Swal.fire({
-        //         icon: 'error',
-        //         title: 'Error',
-        //         text: flash.error,
-        //         toast: true,
-        //         showConfirmButton: false,
-        //         position: 'top-end',
-        //         timer: 3000,
-        //     });
-        // }
-    },
-    beforeUnmount() {
-        clearInterval(this.notificationPoll);
-    },
+const toggleTheme = () => {
+    isDark.value = document.body.classList.toggle('dark-mode');
 };
+
+const logOut = () => {
+    router.post(route('logout'));
+};
+
+const openNotification = (notification) => {
+    router.post(route('notifications.read', notification.id));
+};
+
+const markAllNotificationsAsRead = () => {
+    router.post(route('notifications.read-all'), {}, { preserveScroll: true });
+};
+
+let notificationPoll = null;
+
+onMounted(() => {
+    notificationPoll = setInterval(() => {
+        if (!document.hidden) {
+            router.reload({ only: ['notifications'] });
+        }
+    }, 60000);
+});
+
+onBeforeUnmount(() => clearInterval(notificationPoll));
 </script>
 
 <style scoped>
@@ -437,7 +267,33 @@ export default {
 }
 
 .notification-row {
-    cursor: pointer;
+    width: 100%;
+    text-align: left;
+}
+
+.link-list .btn-reset {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 0.5rem 0;
+    color: #526484;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.link-list .btn-reset:hover {
+    color: #6576ff;
+}
+
+.link-list .btn-reset .icon {
+    font-size: 1.125rem;
+    width: 1.75rem;
+    opacity: 0.8;
+}
+
+.app-logo {
+    width: 4rem;
+    height: 4rem;
 }
 
 .notification-row.is-unread .nk-notification-text span {

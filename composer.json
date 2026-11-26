@@ -1,56 +1,32 @@
 {
-    "name": "laravel/laravel",
+    "name": "mrmarioo/rol-sys",
     "type": "project",
-    "description": "The Laravel Framework.",
+    "description": "Precision agriculture system with AI-driven field analysis (master's thesis).",
     "keywords": [
-        "framework",
-        "laravel"
+        "laravel",
+        "inertia",
+        "vue",
+        "precision-agriculture",
+        "ndvi"
     ],
-    "license": "MIT",
+    "license": "proprietary",
     "require": {
         "php": "^8.3",
-        "barryvdh/laravel-debugbar": "^3.9",
-        "barryvdh/laravel-dompdf": "^2.2",
-        "barryvdh/laravel-snappy": "^1.0",
-        "doctrine/dbal": "^3.6",
-        "getbrevo/brevo-php": "1.x.x",
+        "barryvdh/laravel-dompdf": "^3.1",
         "guzzlehttp/guzzle": "^7.2",
-        "h4cc/wkhtmltoimage-amd64": "0.12.x",
-        "h4cc/wkhtmltopdf-amd64": "0.12.x",
         "inertiajs/inertia-laravel": "^2.0",
-        "lab404/laravel-impersonate": "^1.7",
         "laravel/framework": "^11.0",
         "laravel/jetstream": "^5.3",
         "laravel/sanctum": "^4.0",
-        "laravel/socialite": "^5.16",
         "laravel/tinker": "^2.8",
-        "league/flysystem-aws-s3-v3": "^3.0",
-        "league/iso3166": "^4.3",
-        "maatwebsite/excel": "^3.1",
-        "mikehaertl/php-pdftk": "^0.13.0",
-        "milon/barcode": "^11.0",
-        "phpoffice/phpword": "^1.3",
         "predis/predis": "^2.1",
-        "seyyedam7/laravel-html-parser": "^2.2",
-        "socialiteproviders/microsoft-azure": "^5.2",
-        "spatie/laravel-activitylog": "^4.7",
-        "spatie/laravel-permission": "^6.0",
         "spatie/laravel-query-builder": "^6.4",
-        "spatie/laravel-slack-alerts": "^1.2",
-        "spatie/pdf-to-text": "^1.52",
-        "spatie/simple-excel": "^3.3",
-        "symfony/http-client": "^6.2",
-        "symfony/mailgun-mailer": "^6.3",
-        "tightenco/ziggy": "^2.0",
-        "webfox/laravel-xero-oauth2": "^4.2",
-        "xeroapi/xero-php-oauth2": "^3.0"
+        "tightenco/ziggy": "^2.0"
     },
     "require-dev": {
         "fakerphp/faker": "^1.9.1",
-        "knuckleswtf/scribe": "^4.17",
-        "laravel/breeze": "^2.0",
+        "larastan/larastan": "^3.0",
         "laravel/pint": "^1.0",
-        "laravel/sail": "^1.18",
         "mockery/mockery": "^1.4.4",
         "nunomaduro/collision": "^8.1",
         "phpunit/phpunit": "^10.0",
@@ -61,10 +37,7 @@
             "App\\": "app/",
             "Database\\Factories\\": "database/factories/",
             "Database\\Seeders\\": "database/seeders/"
-        },
-        "files": [
-            "app/helpers.php"
-        ]
+        }
     },
     "autoload-dev": {
         "psr-4": {
@@ -84,6 +57,15 @@
         ],
         "post-create-project-cmd": [
             "@php artisan key:generate --ansi"
+        ],
+        "test": [
+            "@php artisan test"
+        ],
+        "lint": [
+            "pint --test"
+        ],
+        "analyse": [
+            "phpstan analyse --memory-limit=1G"
         ]
     },
     "extra": {
@@ -96,7 +78,6 @@
         "preferred-install": "dist",
         "sort-packages": true,
         "allow-plugins": {
-            "pestphp/pest-plugin": true,
             "php-http/discovery": true
         }
     },

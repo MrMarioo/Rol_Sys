@@ -5,7 +5,7 @@ namespace App\Policies;
 use App\Models\Analytics;
 use App\Models\User;
 
-class AnalyticsPolicy
+final class AnalyticsPolicy
 {
     public function viewAny(User $user): bool
     {

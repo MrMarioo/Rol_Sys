@@ -5,7 +5,7 @@ namespace App\Notifications;
 use App\Models\Analytics;
 use Illuminate\Notifications\Notification;
 
-class AnalysisCompleted extends Notification
+final class AnalysisCompleted extends Notification
 {
     public function __construct(
         public readonly Analytics $analytics,
@@ -19,10 +19,10 @@ class AnalysisCompleted extends Notification
     public function toArray(object $notifiable): array
     {
         return [
-            'title' => 'Analiza AI zakończona',
-            'message' => sprintf('Analiza pola %s jest gotowa.', $this->analytics->field->name),
+            'title' => 'AI analysis completed',
+            'message' => sprintf('Analysis of field %s is ready.', $this->analytics->field->name),
             'level' => 'success',
-            'url' => route('analytics.show', $this->analytics->id, false),
+            'url' => route(name: 'analytics.show', parameters: $this->analytics->id, absolute: false),
         ];
     }
 }

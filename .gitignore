@@ -36,7 +36,9 @@ ai/__pycache__/
 ai/**/__pycache__/
 ai/.venv/
 ai/venv/
+ai/.idea/
+ai/.pytest_cache/
+ai/.ruff_cache/
 *.pyc
 /.superpowers/
 /.playwright-mcp/
-/docs/

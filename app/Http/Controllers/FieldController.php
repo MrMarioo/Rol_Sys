@@ -2,7 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\Statuses;
+use App\Enums\FieldStatus;
+use App\Enums\Sensitivity;
 use App\Http\Requests\StoreFieldRequest;
 use App\Http\Requests\UpdateFieldRequest;
 use App\Http\Resources\FieldResource;
@@ -13,7 +14,6 @@ use App\Services\FieldDataSummaryService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
 use Spatie\QueryBuilder\AllowedFilter;
@@ -22,7 +22,6 @@ use Spatie\QueryBuilder\QueryBuilder;
 final class FieldController extends Controller
 {
     public function __construct(
-        private readonly Field $field,
         private readonly Crop $crop,
         private readonly FieldDataSummaryService $fieldDataSummary,
         private readonly FieldAnalyticsSummaryService $fieldAnalyticsSummary,
@@ -31,8 +30,6 @@ final class FieldController extends Controller
     public function index(Request $request): Response
     {
         $fields = QueryBuilder::for(subject: Field::class)
-            ->with(relations: ['crops'])
-            ->where('user_id', Auth::id())
             ->allowedFilters(filters: [
                 'name',
                 'location',
@@ -55,8 +52,10 @@ final class FieldController extends Controller
             ])
             ->allowedSorts(sorts: ['name', 'size', 'created_at'])
             ->defaultSort(sorts: ['-created_at'])
+            ->with(relations: ['crops'])
+            ->where('user_id', $request->user()->id)
             ->paginate(
-                perPage: $request->integer(key: 'per_page', default: config('pagination.list')),
+                perPage: $this->perPage(request: $request),
             )
             ->withQueryString();
 
@@ -64,8 +63,7 @@ final class FieldController extends Controller
             component: 'Field/Index',
             props: [
                 'fields' => $fields->through(fn (Field $field) => FieldResource::make($field)->resolve()),
-                'user' => Auth::user(),
-                'statuses' => array_column(Statuses::cases(), 'value'),
+                'statuses' => array_column(FieldStatus::cases(), 'value'),
                 'crops' => $this->crop->query()->orderBy('name')->get(columns: ['id', 'name']),
             ]
         );
@@ -78,10 +76,10 @@ final class FieldController extends Controller
         return Inertia::render(
             component: 'Field/Show',
             props: [
-                'field' => FieldResource::make(resource: $field)->resolve(),
+                'field' => FieldResource::make($field)->resolve(),
                 ...$this->fieldDataSummary->summarize(field: $field),
                 ...$this->fieldAnalyticsSummary->summarize(field: $field),
-                'sensitivities' => ['low', 'medium', 'high'],
+                'sensitivities' => Sensitivity::values(),
             ]
         );
     }
@@ -93,8 +91,8 @@ final class FieldController extends Controller
         return Inertia::render(
             component: 'Field/Edit',
             props: [
-                'field' => FieldResource::make(resource: $field)->resolve(),
-                'statuses' => array_column(Statuses::cases(), 'value'),
+                'field' => FieldResource::make($field)->resolve(),
+                'statuses' => array_column(FieldStatus::cases(), 'value'),
             ]
         );
     }
@@ -102,7 +100,7 @@ final class FieldController extends Controller
     public function store(StoreFieldRequest $request): RedirectResponse
     {
         /** @var Field $field */
-        $field = $this->field->create($request->validated());
+        $field = $request->user()->fields()->create(attributes: $request->validated());
 
         return redirect()
             ->route(route: 'fields.index')
@@ -117,7 +115,7 @@ final class FieldController extends Controller
         $field->update($request->validated());
 
         return redirect()
-            ->route(route: 'fields.index')
+            ->route(route: 'fields.show', parameters: $field)
             ->with(
                 key: 'success',
                 value: sprintf('Field %s has been updated.', $field->name),

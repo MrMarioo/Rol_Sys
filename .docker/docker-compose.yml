@@ -1,5 +1,3 @@
-version: "3.3"
-
 services:
     web:
         container_name: ${CONTAINER_NAME}
@@ -11,7 +9,7 @@ services:
                 - USERNAME=${USERNAME:-ubuntu}
                 - UID=${UID:-1000}
                 - GROUP=${GROUP:-root}
-                - ROOTPASS=${ROOTPASS:-l3tm31n}
+                - ROOTPASS=${ROOTPASS:?Set ROOTPASS in .docker/.env}
                 - INSTALL_NODE=${INSTALL_NODE-true}
                 - INSTALL_COMPOSER=${INSTALL_COMPOSER-true}
         expose:
@@ -52,14 +50,14 @@ services:
         restart: always
         environment:
             MYSQL_DATABASE: laravel
-            MYSQL_ROOT_PASSWORD: "${MYSQL_PASSWORD:-l3tm31n}"
+            MYSQL_ROOT_PASSWORD: "${MYSQL_PASSWORD:?Set MYSQL_PASSWORD in .docker/.env}"
         expose:
             - "${MYSQL_PORT:-3306}"
         ports:
             - "${MYSQL_EXTERNAL_PORT:-33060}:3306"
         volumes:
             - ./docker_volumes/db:/var/lib/mysql
-            - ./main-db/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
+            - ./mysql-init:/docker-entrypoint-initdb.d:ro
         labels:
             - "traefik.enable=true"
             - "traefik.http.routers.${CONTAINER_NAME}-db.entrypoints=${ENTRYPOINT_DB}"
@@ -73,7 +71,7 @@ services:
 
     phpmyadmin:
         container_name: "${CONTAINER_NAME}-pma"
-        image: phpmyadmin/phpmyadmin:latest
+        image: phpmyadmin/phpmyadmin:5.2.2
         expose:
             - "${PHPMYADMIN_PORT:-80}"
         depends_on:
@@ -94,7 +92,7 @@ services:
             - proxy
 
     redis:
-        image: "redis:alpine"
+        image: "redis:7.4.2-alpine"
         container_name: "${CONTAINER_NAME}-redis"
         expose:
             - "${REDIS_PORT:-6379}"
@@ -106,7 +104,7 @@ services:
             - proxy
 
     mailpit:
-        image: "axllent/mailpit:latest"
+        image: "axllent/mailpit:v1.22.3"
         container_name: "${CONTAINER_NAME}-mailpit"
         environment:
             MP_UI_BIND_ADDR: "0.0.0.0:${MAILPIT_PORT:-80}"
@@ -125,31 +123,22 @@ services:
     ai-service:
         container_name: "${CONTAINER_NAME}-ai"
         build:
-            context: ..
-            dockerfile: .docker/ai/Dockerfile
+            context: ../ai
+            dockerfile: ../.docker/ai/Dockerfile
         restart: always
-        volumes:
-            - ../ai:/app
         expose:
-            - "${AI_PORT:-5000}"
+            - "5000"
         environment:
-            - FLASK_ENV=production
-            - DB_HOST=db
-            - DB_USER=root
-            - DB_PASSWORD=${MYSQL_PASSWORD:-l3tm31n}
-            - DB_NAME=laravel
-        depends_on:
-            - db
-        links:
-            - db
+            AI_SERVICE_TOKEN: "${AI_SERVICE_TOKEN:-}"
+            AI_LOG_LEVEL: "${AI_LOG_LEVEL:-info}"
+        healthcheck:
+            test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5000/health', timeout=3)"]
+            interval: 30s
+            timeout: 5s
+            retries: 3
+            start_period: 20s
         labels:
-            - "traefik.enable=true"
-            - "traefik.http.routers.${CONTAINER_NAME}-ai.entrypoints=${ENTRYPOINT}"
-            - "traefik.http.routers.${CONTAINER_NAME}-ai.rule=Host(`ai.${DOMAIN}`)"
-            - "traefik.http.routers.${CONTAINER_NAME}-ai.service=${CONTAINER_NAME}-ai"
-            - "traefik.http.services.${CONTAINER_NAME}-ai.loadbalancer.server.port=${AI_PORT:-5000}"
-            - "traefik.http.routers.${CONTAINER_NAME}-ai.tls=${TLS:-false}"
-            - "traefik.http.routers.${CONTAINER_NAME}-ai.tls.certresolver=${CERT_RESOLVER:-letsencrypt}"
+            - "traefik.enable=false"
         networks:
             - proxy
 
@@ -181,7 +170,7 @@ services:
             - "traefik.http.routers.${CONTAINER_NAME}-minio-ui.tls.certresolver=${CERT_RESOLVER:-letsencrypt}"
         environment:
             MINIO_ROOT_USER: "${MINIO_USER:-minio}"
-            MINIO_ROOT_PASSWORD: "${MINIO_PASSWORD:-1Zx2df3ty!}"
+            MINIO_ROOT_PASSWORD: "${MINIO_PASSWORD:?Set MINIO_PASSWORD in .docker/.env}"
             MINIO_BROWSER_REDIRECT_URL: "http://minio.${DOMAIN}"
         networks:
             - proxy

@@ -19,7 +19,6 @@
         <div class="nk-block">
             <form @submit.prevent="updateReport">
                 <div class="row g-4">
-                    <!-- Template Display (Read-only) -->
                     <div class="col-12">
                         <div class="card">
                             <div class="card-inner">
@@ -41,7 +40,6 @@
                         </div>
                     </div>
 
-                    <!-- Report Details -->
                     <div class="col-md-8">
                         <div class="card">
                             <div class="card-inner">
@@ -72,9 +70,9 @@
                                 </div>
 
                                 <div class="form-group">
-                                    <label class="form-label">Select Fields <span class="text-danger">*</span></label>
+                                    <label class="form-label" for="fields_included">Select Fields <span class="text-danger">*</span></label>
                                     <div class="form-control-wrap">
-                                        <select class="form-select" v-model="form.fields_included" multiple>
+                                        <select id="fields_included" v-model="form.fields_included" class="form-select" multiple>
                                             <option v-for="field in fields" :key="field.id" :value="field.id">
                                                 {{ field.name }} ({{ field.size }} ha)
                                             </option>
@@ -87,42 +85,32 @@
                         </div>
                     </div>
 
-                    <!-- Template Parameters -->
                     <div class="col-md-4">
                         <div class="card">
                             <div class="card-inner">
                                 <h5 class="card-title">Parameters</h5>
 
-                                <!-- Weekly/Monthly Summary Parameters -->
                                 <div v-if="report.type === 'weekly_summary' || report.type === 'monthly_summary'">
                                     <div v-if="report.type === 'weekly_summary'" class="form-group">
-                                        <label class="form-label">Start Date</label>
-                                        <input
-                                            type="date"
-                                            class="form-control"
-                                            v-model="form.parameters.start_date"
-                                        />
+                                        <label class="form-label" for="start_date">Start Date</label>
+                                        <input id="start_date" v-model="form.parameters.start_date" type="date" class="form-control" />
                                     </div>
                                     <div v-if="report.type === 'weekly_summary'" class="form-group">
-                                        <label class="form-label">End Date</label>
-                                        <input
-                                            type="date"
-                                            class="form-control"
-                                            v-model="form.parameters.end_date"
-                                        />
+                                        <label class="form-label" for="end_date">End Date</label>
+                                        <input id="end_date" v-model="form.parameters.end_date" type="date" class="form-control" />
                                     </div>
 
                                     <div v-if="report.type === 'monthly_summary'" class="form-group">
-                                        <label class="form-label">Month</label>
-                                        <select class="form-select" v-model="form.parameters.month">
+                                        <label class="form-label" for="month">Month</label>
+                                        <select id="month" v-model="form.parameters.month" class="form-select">
                                             <option v-for="n in 12" :key="n" :value="n">
-                                                {{ getMonthName(n) }}
+                                                {{ MONTHS[n - 1] }}
                                             </option>
                                         </select>
                                     </div>
                                     <div v-if="report.type === 'monthly_summary'" class="form-group">
-                                        <label class="form-label">Year</label>
-                                        <select class="form-select" v-model="form.parameters.year">
+                                        <label class="form-label" for="year">Year</label>
+                                        <select id="year" v-model="form.parameters.year" class="form-select">
                                             <option v-for="year in years" :key="year" :value="year">
                                                 {{ year }}
                                             </option>
@@ -130,11 +118,10 @@
                                     </div>
                                 </div>
 
-                                <!-- Problem Report Parameters -->
                                 <div v-if="report.type === 'problem_report'">
                                     <div class="form-group">
-                                        <label class="form-label">Severity Level</label>
-                                        <select class="form-select" v-model="form.parameters.severity">
+                                        <label class="form-label" for="severity">Severity Level</label>
+                                        <select id="severity" v-model="form.parameters.severity" class="form-select">
                                             <option value="all">All Levels</option>
                                             <option value="low">Low</option>
                                             <option value="medium">Medium</option>
@@ -142,28 +129,19 @@
                                         </select>
                                     </div>
                                     <div class="form-group">
-                                        <label class="form-label">From Date</label>
-                                        <input
-                                            type="date"
-                                            class="form-control"
-                                            v-model="form.parameters.start_date"
-                                        />
+                                        <label class="form-label" for="start_date">From Date</label>
+                                        <input id="start_date" v-model="form.parameters.start_date" type="date" class="form-control" />
                                     </div>
                                     <div class="form-group">
-                                        <label class="form-label">To Date</label>
-                                        <input
-                                            type="date"
-                                            class="form-control"
-                                            v-model="form.parameters.end_date"
-                                        />
+                                        <label class="form-label" for="end_date">To Date</label>
+                                        <input id="end_date" v-model="form.parameters.end_date" type="date" class="form-control" />
                                     </div>
                                 </div>
 
-                                <!-- Crop Status Parameters -->
                                 <div v-if="report.type === 'crop_status'">
                                     <div class="form-group">
-                                        <label class="form-label">Growth Stage</label>
-                                        <select class="form-select" v-model="form.parameters.growth_stage">
+                                        <label class="form-label" for="growth_stage">Growth Stage</label>
+                                        <select id="growth_stage" v-model="form.parameters.growth_stage" class="form-select">
                                             <option value="all">All Stages</option>
                                             <option value="germination">Germination</option>
                                             <option value="seedling">Seedling</option>
@@ -174,14 +152,21 @@
                                     </div>
                                 </div>
 
-                                <!-- Comparative Parameters -->
                                 <div v-if="report.type === 'comparative'">
                                     <div class="form-group">
-                                        <label class="form-label">Comparison Type</label>
-                                        <select class="form-select" v-model="form.parameters.comparison_type">
+                                        <label class="form-label" for="comparison_type">Comparison Type</label>
+                                        <select id="comparison_type" v-model="form.parameters.comparison_type" class="form-select">
                                             <option value="fields">Compare Fields</option>
                                             <option value="time_periods">Compare Time Periods</option>
                                         </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label" for="start_date">From Date</label>
+                                        <input id="start_date" v-model="form.parameters.start_date" type="date" class="form-control" />
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label" for="end_date">To Date</label>
+                                        <input id="end_date" v-model="form.parameters.end_date" type="date" class="form-control" />
                                     </div>
                                 </div>
 
@@ -193,7 +178,6 @@
                         </div>
                     </div>
 
-                    <!-- Submit -->
                     <div class="col-12">
                         <div class="form-group mt-4">
                             <div class="d-flex justify-content-end gap-2">
@@ -201,9 +185,9 @@
                                 <button
                                     type="submit"
                                     class="btn btn-primary p-3"
-                                    :disabled="isLoading || !form.title || form.fields_included.length === 0"
+                                    :disabled="form.processing || !form.title || form.fields_included.length === 0"
                                 >
-                                    <div v-if="isLoading" class="spinner-border spinner-border-sm me-1" role="status"></div>
+                                    <div v-if="form.processing" class="spinner-border spinner-border-sm me-1" role="status"></div>
                                     <em v-else class="icon ni ni-save me-1"></em>
                                     <span>Update Report</span>
                                 </button>
@@ -216,75 +200,58 @@
     </div>
 </template>
 
-<script>
-import { useForm, Link, Head } from '@inertiajs/vue3';
-import { ref, computed } from 'vue';
+<script setup>
+import { computed } from 'vue';
+import { Head, Link, useForm } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 
-export default {
-    layout: AppLayout,
-    components: {
-        Link,
-        Head,
-    },
-    props: {
-        report: Object,
-        templates: Object,
-        fields: Array,
-        crops: Array,
-    },
-    setup(props) {
-        const isLoading = ref(false);
+defineOptions({ layout: AppLayout });
 
-        const form = useForm({
-            title: props.report.title,
-            type: props.report.type,
-            description: props.report.description || '',
-            fields_included: props.report.fields_included || [],
-            parameters: props.report.parameters || {}
-        });
+const props = defineProps({
+    report: Object,
+    templates: Object,
+    fields: Array,
+    crops: Array,
+});
 
-        const years = computed(() => {
-            const currentYear = new Date().getFullYear();
-            return Array.from({ length: 5 }, (_, i) => currentYear - i);
-        });
+const MONTHS = [
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December',
+];
 
-        const currentTemplate = computed(() => {
-            return props.templates[props.report.type] || {
-                name: 'Unknown Template',
-                description: 'Template information not available',
-                icon: 'ni-file-text'
-            };
-        });
+const currentYear = new Date().getFullYear();
 
-        const getMonthName = (month) => {
-            const months = [
-                'January', 'February', 'March', 'April', 'May', 'June',
-                'July', 'August', 'September', 'October', 'November', 'December'
-            ];
-            return months[month - 1];
-        };
+const years = Array.from({ length: 5 }, (_, index) => currentYear - index);
 
-        const updateReport = () => {
-            isLoading.value = true;
+const form = useForm({
+    title: props.report.title,
+    type: props.report.type,
+    description: props.report.description || '',
+    fields_included: props.report.fields_included || [],
+    parameters: { ...(props.report.parameters ?? {}) },
+});
 
-            form.put(route('reports.update', props.report.id), {
-                preserveScroll: true,
-                onFinish: () => {
-                    isLoading.value = false;
-                },
-            });
-        };
+const currentTemplate = computed(
+    () =>
+        props.templates[props.report.type] ?? {
+            name: 'Unknown Template',
+            description: 'Template information not available',
+            icon: 'ni-file-text',
+        },
+);
 
-        return {
-            form,
-            isLoading,
-            years,
-            currentTemplate,
-            getMonthName,
-            updateReport,
-        };
-    },
+const updateReport = () => {
+    form.put(route('reports.update', props.report.id), { preserveScroll: true });
 };
 </script>
 

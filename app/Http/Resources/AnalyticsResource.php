@@ -9,7 +9,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
 /**
  * @mixin Analytics
  */
-class AnalyticsResource extends JsonResource
+final class AnalyticsResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
@@ -21,7 +21,7 @@ class AnalyticsResource extends JsonResource
                 value: fn () => FieldResource::make($this->field)->resolve(),
             ),
             'analysis_type' => $this->analysis_type,
-            'analysis_date' => $this->analysis_date?->format('Y-m-d'),
+            'analysis_date' => $this->analysis_date->format('Y-m-d'),
             'results' => $this->results,
             'recommendations' => $this->recommendations,
             'parameters' => $this->parameters,

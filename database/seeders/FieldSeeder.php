@@ -2,35 +2,43 @@
 
 namespace Database\Seeders;
 
+use App\Enums\FieldStatus;
 use App\Models\Field;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 
-class FieldSeeder extends Seeder
+final class FieldSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
+    private const NAMES = [
+        'North Meadow',
+        'River Plot',
+        'Hilltop Field',
+        'Oak Lane Field',
+        'South Pasture',
+    ];
+
+    private const LOCATIONS = [
+        'Kielce, Poland',
+        'Chęciny, Poland',
+        'Morawica, Poland',
+        'Daleszyce, Poland',
+        'Piekoszów, Poland',
+    ];
+
     public function run(): void
     {
-        $users = User::where('role', 'rolnik')->get();
-
-        foreach ($users as $user) {
+        foreach (User::all() as $user) {
             $fieldCount = rand(2, 5);
 
             for ($i = 0; $i < $fieldCount; $i++) {
-                Field::create([
+                Field::query()->create(attributes: [
                     'user_id' => $user->id,
-                    'name' => 'Pole ' . ($i + 1) . ' - ' . $user->name,
-                    'location' => 'Lokalizacja przykładowa ' . ($i + 1),
-                    'size' => rand(50, 500) / 10, // 5.0 - 50.0 ha
-                    'description' =>
-                        'Przykładowy opis pola ' .
-                        ($i + 1) .
-                        ' należącego do ' .
-                        $user->name,
+                    'name' => self::NAMES[$i],
+                    'location' => self::LOCATIONS[$i],
+                    'size' => rand(50, 500) / 10,
+                    'description' => sprintf('Arable field managed by %s.', $user->name),
                     'boundaries' => $this->randomRectangle(),
-                    'status' => 'active',
+                    'status' => FieldStatus::Active->value,
                 ]);
             }
         }

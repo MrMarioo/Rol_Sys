@@ -84,8 +84,8 @@ class SharedNotificationsTest extends TestCase
                 'id' => Str::uuid()->toString(),
                 'type' => 'App\\Notifications\\ReportGenerated',
                 'data' => [
-                    'title' => 'Raport wygenerowany',
-                    'message' => 'Raport gotowy.',
+                    'title' => 'Report generated',
+                    'message' => 'Report is ready.',
                     'level' => 'success',
                     'url' => '/reports/1',
                 ],

@@ -10,11 +10,10 @@ use App\Notifications\AnalysisCompleted;
 use App\Notifications\AnalysisFailed;
 use App\Notifications\ReportGenerated;
 use Illuminate\Database\Seeder;
-use Illuminate\Notifications\Notification;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
-class NotificationSeeder extends Seeder
+final class NotificationSeeder extends Seeder
 {
     public function run(): void
     {
@@ -42,9 +41,6 @@ class NotificationSeeder extends Seeder
         }
     }
 
-    /**
-     * @return array<int, Notification>
-     */
     private function candidatesFor(User $user): array
     {
         $fieldIds = Field::where('user_id', $user->id)->pluck('id');

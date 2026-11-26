@@ -2,16 +2,38 @@
 
 namespace App\Models;
 
+use App\Enums\FieldDataType;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Carbon;
 
-class Field extends Model
+/**
+ * @property int $id
+ * @property int $user_id
+ * @property string $name
+ * @property string|null $location
+ * @property string $size
+ * @property string|null $description
+ * @property array<int, array{0: float, 1: float}> $boundaries
+ * @property string $status
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property-read User $user
+ * @property-read Collection<int, FieldData> $fieldData
+ * @property-read FieldData|null $latestNdviReading
+ * @property-read Collection<int, Analytics> $analytics
+ * @property-read Collection<int, Crop> $crops
+ */
+final class Field extends Model
 {
     use HasFactory;
-    protected $table = 'fields';
+
     protected $fillable = [
         'user_id',
         'name',
@@ -21,31 +43,47 @@ class Field extends Model
         'boundaries',
         'status',
     ];
-    protected $casts = [
-        'boundaries' => 'array',
-        'size' => 'decimal:2',
-    ];
-    public function user(): belongsTo
+
+    protected function casts(): array
+    {
+        return [
+            'boundaries' => 'array',
+            'size' => 'decimal:2',
+        ];
+    }
+
+    /** @return BelongsTo<User, $this> */
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
+
+    /** @return HasMany<FieldData, $this> */
     public function fieldData(): HasMany
     {
         return $this->hasMany(FieldData::class);
     }
+
+    /** @return HasOne<FieldData, $this> */
+    public function latestNdviReading(): HasOne
+    {
+        return $this->hasOne(FieldData::class)->ofMany(
+            column: ['collection_date' => 'max', 'id' => 'max'],
+            aggregate: fn (Builder $query) => $query->where('data_type', FieldDataType::Ndvi->value),
+        );
+    }
+
+    /** @return HasMany<Analytics, $this> */
     public function analytics(): HasMany
     {
         return $this->hasMany(Analytics::class);
     }
-    public function dataSource(): BelongsToMany
-    {
-        return $this->belongsToMany(DataSource::class, 'field_data_sources')
-            ->withPivot('settings')
-            ->withTimestamps();
-    }
+
+    /** @return BelongsToMany<Crop, $this, FieldCrop> */
     public function crops(): BelongsToMany
     {
         return $this->belongsToMany(Crop::class, 'field_crops')
+            ->using(FieldCrop::class)
             ->withPivot(
                 'planting_date',
                 'expected_harvest_date',
@@ -54,56 +92,5 @@ class Field extends Model
                 'status',
             )
             ->withTimestamps();
-    }
-
-    public function scopeQuerySearch($query)
-    {
-        return $query
-            ->when(request('search'), function ($q, $search) {
-                if (is_string($search)) {
-                    $q->where(function ($subQuery) use ($search) {
-                        $subQuery
-                            ->where('name', 'like', "%{$search}%")
-                            ->orWhere('location', 'like', "%{$search}%")
-                            ->orWhere('description', 'like', "%{$search}%");
-                    });
-                }
-            })
-            ->when(request('name'), function ($q, $name) {
-                $q->where('name', 'like', "%{$name}%");
-            })
-            ->when(request('location'), function ($q, $location) {
-                $q->where('location', 'like', "%{$location}%");
-            })
-            ->when(request('description'), function ($q, $description) {
-                $q->where('description', 'like', "%{$description}%");
-            })
-            ->when(request('size_min'), function ($q, $sizeMin) {
-                $q->where('size', '>=', $sizeMin);
-            })
-            ->when(request('size_max'), function ($q, $sizeMax) {
-                $q->where('size', '<=', $sizeMax);
-            })
-            ->when(request('status'), function ($q, $status) {
-                $q->where('status', $status);
-            })
-            ->when(request('user_id', auth()->id()), function ($q, $userId) {
-                $q->where('user_id', $userId);
-            })
-            ->when(request('crop_id'), function ($q, $cropId) {
-                $q->whereHas('crops', function ($subQuery) use ($cropId) {
-                    $subQuery->where('crop_id', $cropId);
-                });
-            })
-            ->when(request('data_from'), function ($q, $dataFrom) {
-                $q->whereHas('fieldData', function ($subQuery) use ($dataFrom) {
-                    $subQuery->where('collection_date', '>=', $dataFrom);
-                });
-            })
-            ->when(request('data_to'), function ($q, $dataTo) {
-                $q->whereHas('fieldData', function ($subQuery) use ($dataTo) {
-                    $subQuery->where('collection_date', '<=', $dataTo);
-                });
-            });
     }
 }

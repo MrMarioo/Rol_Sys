@@ -13,7 +13,7 @@
                         <th>Moisture</th>
                         <th>Recommendations</th>
                         <th>Anomalies</th>
-                        <th></th>
+                        <th><span class="visually-hidden">Actions</span></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -37,8 +37,12 @@
                         <td>{{ row.recommendation_count ?? '—' }}</td>
                         <td>{{ row.anomaly_count ?? '—' }}</td>
                         <td class="text-end">
-                            <Link :href="route('analytics.show', row.id)" class="btn btn-icon btn-sm btn-trigger">
-                                <em class="icon ni ni-arrow-right"></em>
+                            <Link
+                                :href="route('analytics.show', row.id)"
+                                class="btn btn-icon btn-sm btn-trigger"
+                                :aria-label="`View analysis from ${row.date}`"
+                            >
+                                <em class="icon ni ni-arrow-right" aria-hidden="true"></em>
                             </Link>
                         </td>
                     </tr>
@@ -50,7 +54,7 @@
 
 <script setup>
 import { Link } from '@inertiajs/vue3';
-import { formatNdvi, formatPercent, statusClass } from '@/Components/Field/analyticsFormat';
+import { formatNdvi, formatPercent, statusClass } from '@/format';
 
 defineProps({
     history: {

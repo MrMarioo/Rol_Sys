@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 /**
  * @extends Factory<Field>
  */
-class FieldFactory extends Factory
+final class FieldFactory extends Factory
 {
     protected $model = Field::class;
 
@@ -17,7 +17,7 @@ class FieldFactory extends Factory
     {
         return [
             'user_id' => User::factory(),
-            'name' => 'Pole ' . fake()->unique()->numberBetween(1, 9999),
+            'name' => 'Pole '.fake()->unique()->numberBetween(1, 9999),
             'size' => fake()->randomFloat(2, 1, 100),
             'status' => 'active',
         ];

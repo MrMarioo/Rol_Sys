@@ -80,7 +80,7 @@
                                     <span v-if="report.description" class="tb-sub">{{ report.description }}</span>
                                 </div>
                                 <div class="nk-tb-col tb-col-md">
-                                    <span class="badge badge-outline-info">{{ formatReportType(report.type) }}</span>
+                                    <span class="badge badge-dim bg-outline-info">{{ templates[report.type]?.name ?? formatLabel(report.type) }}</span>
                                 </div>
                                 <div class="nk-tb-col tb-col-md">
                                     <ReportStatusBadge :status="report.status" />
@@ -92,9 +92,14 @@
                                     <ul class="nk-tb-actions gx-1">
                                         <li>
                                             <div class="dropdown">
-                                                <a href="#" class="dropdown-toggle btn btn-icon btn-trigger" data-bs-toggle="dropdown">
+                                                <button
+                                                    type="button"
+                                                    class="dropdown-toggle btn btn-icon btn-trigger"
+                                                    data-bs-toggle="dropdown"
+                                                    aria-label="Actions"
+                                                >
                                                     <em class="icon ni ni-more-h"></em>
-                                                </a>
+                                                </button>
                                                 <div class="dropdown-menu dropdown-menu-end">
                                                     <ul class="link-list-opt no-bdr">
                                                         <li>
@@ -110,23 +115,23 @@
                                                             </Link>
                                                         </li>
                                                         <li v-if="report.status === 'draft'">
-                                                            <a href="#" @click.prevent="generateReport(report.id)">
+                                                            <Link :href="route('reports.generate', report.id)" method="post" as="button" preserve-scroll>
                                                                 <em class="icon ni ni-loader"></em>
                                                                 <span>Generate</span>
-                                                            </a>
+                                                            </Link>
                                                         </li>
                                                         <li v-if="report.status === 'generated'">
-                                                            <a href="#" @click.prevent="downloadReport(report.id)">
+                                                            <a :href="route('reports.download', report.id)" target="_blank" rel="noopener">
                                                                 <em class="icon ni ni-download"></em>
                                                                 <span>Download</span>
                                                             </a>
                                                         </li>
                                                         <li class="divider"></li>
                                                         <li>
-                                                            <a href="#" @click.prevent="deleteReport(report.id)">
+                                                            <button type="button" @click="deleteReport(report.id)">
                                                                 <em class="icon ni ni-trash"></em>
                                                                 <span>Delete</span>
-                                                            </a>
+                                                            </button>
                                                         </li>
                                                     </ul>
                                                 </div>
@@ -138,7 +143,6 @@
                         </div>
                     </div>
 
-                    <!-- Pagination -->
                     <div class="card-inner pb-3 pt-3">
                         <div class="d-flex justify-content-center">
                             <Pagination :links="reports.links" />
@@ -150,67 +154,32 @@
     </div>
 </template>
 
-<script>
-import { Head, Link } from '@inertiajs/vue3';
+<script setup>
+import { Head, Link, router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import ReportStatusBadge from '@/Components/ReportStatusBadge.vue';
 import Pagination from '@/Components/Pagination.vue';
 import { ConfirmModal } from '@/Helpers';
-import { router } from '@inertiajs/vue3';
+import { formatDate, formatLabel } from '@/format';
 
-export default {
-    layout: AppLayout,
-    components: {
-        Head,
-        Link,
-        ReportStatusBadge,
-        Pagination,
-    },
-    props: {
-        reports: Object,
-        templates: Object,
-    },
-    methods: {
-        formatReportType(type) {
-            const types = {
-                'weekly_summary': 'Weekly Summary',
-                'monthly_summary': 'Monthly Summary',
-                'problem_report': 'Problem Report',
-                'crop_status': 'Crop Status',
-                'comparative': 'Comparative Analysis'
-            };
-            return types[type] || type;
-        },
-        formatDate(dateString) {
-            return new Date(dateString).toLocaleDateString();
-        },
-        generateReport(reportId) {
-            router.visit(route('reports.generate', reportId), {
-                method: 'post',
-                preserveScroll: true,
-            });
-        },
-        downloadReport(reportId) {
-            window.open(route('reports.download', reportId), '_blank');
-        },
-        deleteReport(reportId) {
-            ConfirmModal.fire({
-                title: 'Delete Report',
-                text: 'Are you sure you want to delete this report?',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#3085d6',
-                cancelButtonColor: '#d33',
-                confirmButtonText: 'Yes, delete it!',
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    router.delete(route('reports.destroy', reportId), {
-                        preserveScroll: true,
-                    });
-                }
-            });
-        },
-    },
+defineOptions({ layout: AppLayout });
+
+defineProps({
+    reports: Object,
+    templates: Object,
+});
+
+const deleteReport = async (reportId) => {
+    const { isConfirmed } = await ConfirmModal.fire({
+        icon: 'warning',
+        title: 'Delete Report',
+        text: 'Are you sure you want to delete this report?',
+        confirmButtonText: 'Yes, delete',
+    });
+
+    if (isConfirmed) {
+        router.delete(route('reports.destroy', reportId), { preserveScroll: true });
+    }
 };
 </script>
 
