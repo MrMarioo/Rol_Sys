@@ -2,53 +2,51 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\Sensitivity;
 use App\Http\Requests\AnalyzeFieldRequest;
 use App\Http\Resources\AnalyticsResource;
 use App\Http\Resources\FieldResource;
 use App\Models\Analytics;
 use App\Models\Field;
 use App\Services\FieldAnalysisService;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
 use Spatie\QueryBuilder\AllowedFilter;
 use Spatie\QueryBuilder\QueryBuilder;
 use Symfony\Component\HttpFoundation\Response as HttpResponse;
+use Throwable;
 
 final class AnalyticsController extends Controller
 {
     public function __construct(
-        private readonly Analytics $analytics,
         private readonly FieldAnalysisService $analysisService,
     ) {}
 
     public function index(Request $request): Response
     {
         $analytics = QueryBuilder::for(subject: Analytics::class)
-            ->with(relations: ['field'])
-            ->whereHas('field', fn ($query) => $query->where('user_id', Auth::id()))
             ->allowedFilters(filters: [
                 AllowedFilter::exact(name: 'field_id'),
                 AllowedFilter::exact(name: 'analysis_type'),
             ])
             ->allowedSorts(sorts: ['analysis_date', 'created_at'])
             ->defaultSort(sorts: ['-analysis_date'])
+            ->with(relations: ['field'])
+            ->ownedBy(user: $request->user())
             ->paginate(
-                perPage: $request->integer(key: 'per_page', default: 10),
+                perPage: $this->perPage(request: $request, default: 10),
             )
             ->withQueryString();
-
-        $fields = Field::where('user_id', Auth::id())->get();
 
         return Inertia::render(
             component: 'Analytics/Index',
             props: [
                 'analytics' => $analytics->through(fn (Analytics $analysis) => AnalyticsResource::make($analysis)->resolve()),
-                'fields' => FieldResource::collection(resource: $fields)->resolve(),
-                'sensitivities' => ['low', 'medium', 'high'],
+                'fields' => FieldResource::collection(resource: $request->user()->fields()->orderBy('name')->get())->resolve(),
+                'sensitivities' => Sensitivity::values(),
             ]
         );
     }
@@ -71,30 +69,29 @@ final class AnalyticsController extends Controller
         $parameters = [
             'start_date' => $request->input(key: 'start_date'),
             'end_date' => $request->input(key: 'end_date'),
-            'sensitivity' => $request->input(key: 'sensitivity', default: 'medium'),
+            'sensitivity' => $request->input(key: 'sensitivity', default: Sensitivity::Medium->value),
             'include_growth_prediction' => $request->boolean(key: 'include_growth_prediction'),
             'prediction_days' => $request->integer(key: 'prediction_days', default: 7),
         ];
 
         try {
             $analytics = $this->analysisService->analyze(field: $field, parameters: $parameters);
-        } catch (\Throwable $e) {
-            Log::error('Field analysis failed', [
-                'field_id' => $field->id,
-                'message' => $e->getMessage(),
-            ]);
+        } catch (Throwable $e) {
+            report($e);
 
-            return redirect()->back()->with(
-                key: 'error',
-                value: sprintf('Analysis failed: %s', $e->getMessage()),
-            );
+            return redirect()
+                ->back()
+                ->with(
+                    key: 'error',
+                    value: sprintf('Error: analysis of field %s failed, please try again later.', $field->name),
+                );
         }
 
         return redirect()
             ->route(route: 'analytics.show', parameters: $analytics->id)
             ->with(
                 key: 'success',
-                value: sprintf('Analysis for field %s completed.', $field->name),
+                value: sprintf('Analysis for field %s has been completed.', $field->name),
             );
     }
 
@@ -102,19 +99,8 @@ final class AnalyticsController extends Controller
     {
         $this->authorize('download', $analytics);
 
-        $body = sprintf('Analysis report for field %s', $analytics->field->name);
-
-        return response(
-            content: $body,
-            status: HttpResponse::HTTP_OK,
-            headers: [
-                'Content-Type' => 'application/pdf',
-                'Content-Disposition' => sprintf(
-                    'attachment; filename=analysis-report-%d.pdf',
-                    $analytics->id,
-                ),
-            ],
-        );
+        return Pdf::loadView(view: 'analytics-pdf', data: ['analytics' => $analytics->load('field')])
+            ->download(filename: sprintf('analysis-%d-%s.pdf', $analytics->id, $analytics->analysis_date->format('Y-m-d')));
     }
 
     public function destroy(Analytics $analytics): RedirectResponse
@@ -127,7 +113,7 @@ final class AnalyticsController extends Controller
             ->route(route: 'analytics.index')
             ->with(
                 key: 'success',
-                value: 'Analysis deleted successfully.',
+                value: sprintf('Analysis of field %s has been deleted.', $analytics->field->name),
             );
     }
 }

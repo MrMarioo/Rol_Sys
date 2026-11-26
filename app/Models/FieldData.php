@@ -2,14 +2,31 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
-class FieldData extends Model
+/**
+ * @property int $id
+ * @property int $field_id
+ * @property Carbon $collection_date
+ * @property string $data_type
+ * @property mixed $data
+ * @property string|null $latitude
+ * @property string|null $longitude
+ * @property array<string, mixed>|null $metadata
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property-read Field $field
+ */
+final class FieldData extends Model
 {
     use HasFactory;
+
     protected $table = 'field_data';
+
     protected $fillable = [
         'field_id',
         'collection_date',
@@ -19,66 +36,26 @@ class FieldData extends Model
         'longitude',
         'metadata',
     ];
-    protected $casts = [
-        'collection_date' => 'date',
-        'data' => 'array',
-        'metadata' => 'array',
-        'latitude' => 'decimal:7',
-        'longitude' => 'decimal:7',
-    ];
+
+    protected function casts(): array
+    {
+        return [
+            'collection_date' => 'date',
+            'data' => 'array',
+            'metadata' => 'array',
+            'latitude' => 'decimal:7',
+            'longitude' => 'decimal:7',
+        ];
+    }
+
+    /** @return BelongsTo<Field, $this> */
     public function field(): BelongsTo
     {
         return $this->belongsTo(Field::class);
     }
 
-    public function scopeQuerySearch($query)
+    public function scopeOwnedBy(Builder $query, User $user): Builder
     {
-        return $query
-            ->when(request('search'), function ($q, $search) {
-                if (is_string($search)) {
-                    $q->where(function ($subQuery) use ($search) {
-                        $subQuery
-                            ->where('data_type', 'like', "%{$search}%")
-                            ->orWhereHas('field', function ($fieldQuery) use (
-                                $search,
-                            ) {
-                                $fieldQuery->where(
-                                    'name',
-                                    'like',
-                                    "%{$search}%",
-                                );
-                            });
-                    });
-                }
-            })
-            ->when(request('field_id'), function ($q, $fieldId) {
-                $q->where('field_id', $fieldId);
-            })
-            ->when(request('data_type'), function ($q, $dataType) {
-                $q->where('data_type', $dataType);
-            })
-            ->when(request('date_from'), function ($q, $dateFrom) {
-                $q->whereDate('collection_date', '>=', $dateFrom);
-            })
-            ->when(request('date_to'), function ($q, $dateTo) {
-                $q->whereDate('collection_date', '<=', $dateTo);
-            })
-            ->when(request('latitude_min'), function ($q, $latMin) {
-                $q->where('latitude', '>=', $latMin);
-            })
-            ->when(request('latitude_max'), function ($q, $latMax) {
-                $q->where('latitude', '<=', $latMax);
-            })
-            ->when(request('longitude_min'), function ($q, $lngMin) {
-                $q->where('longitude', '>=', $lngMin);
-            })
-            ->when(request('longitude_max'), function ($q, $lngMax) {
-                $q->where('longitude', '<=', $lngMax);
-            })
-            ->when(request('user_id', auth()->id()), function ($q, $userId) {
-                $q->whereHas('field', function ($fieldQuery) use ($userId) {
-                    $fieldQuery->where('user_id', $userId);
-                });
-            });
+        return $query->whereHas('field', fn (Builder $fieldQuery) => $fieldQuery->where('user_id', $user->id));
     }
 }

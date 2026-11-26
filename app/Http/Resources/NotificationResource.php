@@ -9,7 +9,7 @@ use Illuminate\Notifications\DatabaseNotification;
 /**
  * @mixin DatabaseNotification
  */
-class NotificationResource extends JsonResource
+final class NotificationResource extends JsonResource
 {
     public function toArray(Request $request): array
     {

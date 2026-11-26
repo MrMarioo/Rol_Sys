@@ -21,7 +21,7 @@
 
         <div class="nk-block">
             <ul class="nav nav-tabs mb-3">
-                <li v-for="tab in tabs" :key="tab.value" class="nav-item">
+                <li v-for="tab in TABS" :key="tab.value" class="nav-item">
                     <Link
                         :href="route('notifications.index', tab.value ? { filter: { status: tab.value } } : {})"
                         :class="['nav-link', { active: currentStatus === tab.value }]"
@@ -39,9 +39,10 @@
                     </div>
                     <div v-else class="card-inner p-0">
                         <div class="nk-notification">
-                            <div
+                            <button
                                 v-for="notification in history.data"
                                 :key="notification.id"
+                                type="button"
                                 class="nk-notification-item dropdown-inner notification-row"
                                 :class="{ 'is-unread': !notification.read }"
                                 @click="open(notification)"
@@ -56,7 +57,7 @@
                                     </div>
                                     <div class="nk-notification-time">{{ notification.created_at }}</div>
                                 </div>
-                            </div>
+                            </button>
                         </div>
                     </div>
 
@@ -69,51 +70,50 @@
     </div>
 </template>
 
-<script>
-import { Head, Link, router } from '@inertiajs/vue3';
+<script setup>
+import { computed } from 'vue';
+import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import Pagination from '@/Components/Pagination.vue';
 import NotificationIcon from '@/Components/NotificationIcon.vue';
 
-export default {
-    layout: AppLayout,
-    components: {
-        Head,
-        Link,
-        Pagination,
-        NotificationIcon,
-    },
-    props: {
-        history: Object,
-    },
-    data() {
-        return {
-            tabs: [
-                { label: 'All', value: null },
-                { label: 'Unread', value: 'unread' },
-                { label: 'Read', value: 'read' },
-            ],
-        };
-    },
-    computed: {
-        currentStatus() {
-            return new URL(this.$page.url, window.location.origin).searchParams.get('filter[status]');
-        },
-    },
-    methods: {
-        open(notification) {
-            router.post(route('notifications.read', notification.id));
-        },
-        markAllAsRead() {
-            router.post(route('notifications.read-all'), {}, { preserveScroll: true });
-        },
-    },
+defineOptions({ layout: AppLayout });
+
+defineProps({
+    history: Object,
+});
+
+const TABS = [
+    { label: 'All', value: null },
+    { label: 'Unread', value: 'unread' },
+    { label: 'Read', value: 'read' },
+];
+
+const page = usePage();
+
+const currentStatus = computed(() => new URL(page.url, window.location.origin).searchParams.get('filter[status]'));
+
+const open = (notification) => {
+    router.post(route('notifications.read', notification.id));
+};
+
+const markAllAsRead = () => {
+    router.post(route('notifications.read-all'), {}, { preserveScroll: true });
 };
 </script>
 
 <style scoped>
 .notification-row {
+    width: 100%;
+    border: 0 solid #e5e9f2;
+    background: transparent;
+    font: inherit;
+    text-align: left;
+    color: inherit;
     cursor: pointer;
+}
+.notification-row + .notification-row {
+    border-top-width: 1px;
 }
 .notification-row.is-unread .nk-notification-text span {
     font-weight: 700;

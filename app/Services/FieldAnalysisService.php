@@ -7,14 +7,13 @@ use App\Models\Field;
 use App\Models\FieldData;
 use App\Notifications\AnalysisCompleted;
 use App\Notifications\AnalysisFailed;
-use Illuminate\Support\Facades\Http;
-use RuntimeException;
 use Throwable;
 
-class FieldAnalysisService
+final class FieldAnalysisService
 {
     public function __construct(
         private readonly Analytics $analytics,
+        private readonly AiAnalysisClient $aiClient,
     ) {}
 
     public function analyze(Field $field, array $parameters): Analytics
@@ -22,7 +21,7 @@ class FieldAnalysisService
         $payload = $this->buildPayload($field, $parameters);
 
         try {
-            $results = $this->requestAnalysis($field, $payload);
+            $results = $this->aiClient->analyzeField(fieldId: $field->id, payload: $payload);
         } catch (Throwable $e) {
             $field->user->notify(new AnalysisFailed($field));
 
@@ -55,27 +54,11 @@ class FieldAnalysisService
         return $analytics;
     }
 
-    private function requestAnalysis(Field $field, array $payload): array
-    {
-        $response = Http::timeout(60)->post(
-            sprintf('%s/analyze/field/%d', $this->aiServiceUrl(), $field->id),
-            $payload,
-        );
-
-        if (! $response->successful()) {
-            throw new RuntimeException(
-                sprintf('AI service returned %d: %s', $response->status(), $response->body()),
-            );
-        }
-
-        return $response->json();
-    }
-
     private function buildPayload(Field $field, array $parameters): array
     {
         $fieldData = $this->collectFieldData($field, $parameters['start_date'], $parameters['end_date']);
         $activeCrop = $field->crops()
-            ->wherePivot('status', 'active')
+            ->wherePivot(column: 'status', operator: '=', value: 'active')
             ->whereNull('actual_harvest_date')
             ->first();
 
@@ -83,7 +66,7 @@ class FieldAnalysisService
             'field_data' => $fieldData,
             'field_info' => [
                 'size' => $field->size,
-                'planting_date' => $activeCrop?->pivot->planting_date,
+                'planting_date' => $activeCrop?->pivot->planting_date?->toDateString(),
                 'crop_type' => $activeCrop?->name,
             ],
             'parameters' => [
@@ -110,7 +93,7 @@ class FieldAnalysisService
             ->map(fn (FieldData $item) => [
                 'id' => $item->id,
                 'field_id' => $item->field_id,
-                'collection_date' => $item->collection_date?->format('Y-m-d'),
+                'collection_date' => $item->collection_date->format('Y-m-d'),
                 'data_type' => $item->data_type,
                 'data' => $item->data,
                 'latitude' => $item->latitude,
@@ -118,10 +101,5 @@ class FieldAnalysisService
                 'metadata' => $item->metadata,
             ])
             ->toArray();
-    }
-
-    private function aiServiceUrl(): string
-    {
-        return config('services.ai.url', 'http://ai-service:5000');
     }
 }

@@ -2,15 +2,15 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\FieldDataType;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 
-class StoreFieldDataRequest extends FormRequest
+final class StoreFieldDataRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return Auth::check();
+        return $this->user() !== null;
     }
 
     public function rules(): array
@@ -18,10 +18,10 @@ class StoreFieldDataRequest extends FormRequest
         return [
             'field_id' => [
                 'required',
-                Rule::exists('fields', 'id')->where('user_id', Auth::id()),
+                Rule::exists(table: 'fields', column: 'id')->where('user_id', $this->user()->id),
             ],
             'collection_date' => ['required', 'date'],
-            'data_type' => ['required', 'string', 'max:255'],
+            'data_type' => ['required', Rule::enum(type: FieldDataType::class)],
             'data_json' => ['required', 'json'],
             'metadata_json' => ['nullable', 'json'],
             'latitude' => ['nullable', 'numeric', 'between:-90,90'],

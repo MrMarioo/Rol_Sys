@@ -1,20 +1,35 @@
 <script setup>
+import { computed } from 'vue';
+import { Link } from '@inertiajs/vue3';
+
 const props = defineProps({
     styles: String,
-    color: String
-})
-import { Link } from '@inertiajs/vue3';
+    color: String,
+});
+
+const sizes = {
+    'app-logo': '4rem',
+    'size-16': '4rem',
+    'size-64': '16rem',
+};
+
+const size = computed(() => sizes[props.styles] ?? '16rem');
 </script>
 
 <template>
-    <Link :href="'/'">
-
-        <svg :class="styles ? styles : 'size-64'" xmlns="http://www.w3.org/2000/svg"
-             width="693.000000pt" height="592.000000pt" viewBox="0 0 693.000000 592.000000"
-             preserveAspectRatio="xMidYMid meet">
-
+    <Link :href="route('dashboard')" aria-label="Dashboard">
+        <svg
+            :class="styles"
+            :style="{ width: size, height: size }"
+            xmlns="http://www.w3.org/2000/svg"
+            width="693.000000pt"
+            height="592.000000pt"
+            viewBox="0 0 693.000000 592.000000"
+            preserveAspectRatio="xMidYMid meet"
+            aria-hidden="true"
+        >
             <g transform="translate(0.000000,592.000000) scale(0.100000,-0.100000)"
-               :fill="color ? color: '#1a5147'" stroke="none">
+               :fill="color || '#1a5147'" stroke="none">
                 <path d="M3448 5570 c-14 -11 -45 -52 -68 -92 -24 -40 -237 -363 -475 -718
 -451 -674 -600 -903 -704 -1083 -97 -168 -243 -463 -280 -567 -19 -52 -38 -99
 -41 -103 -9 -10 -132 150 -276 360 -82 121 -111 169 -101 174 30 17 264 83

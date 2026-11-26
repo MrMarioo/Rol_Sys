@@ -1,20 +1,17 @@
-<script>
-export default {
-    props: {
-        form: Object,
-    },
-    methods: {
-        resetForm() {
-            Object.keys(this.form.data()).forEach((key) => {
-                this.form[key] = null;
-            });
-        },
-    },
+<script setup>
+const props = defineProps({
+    form: Object,
+});
+
+const resetForm = () => {
+    Object.keys(props.form.data()).forEach((key) => {
+        props.form[key] = null;
+    });
 };
 </script>
 
 <template>
-    <button type="button" @click="resetForm" class="btn btn-outline-secondary">
+    <button type="button" class="btn btn-outline-secondary" @click="resetForm">
         <em class="icon ni ni-reload me-1"></em>
         Reset
     </button>

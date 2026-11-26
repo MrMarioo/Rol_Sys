@@ -1,5 +1,6 @@
 <script setup>
 import { ref, reactive, nextTick } from 'vue';
+import axios from 'axios';
 import DialogModal from './DialogModal.vue';
 import InputError from './InputError.vue';
 import PrimaryButton from './PrimaryButton.vue';
@@ -76,26 +77,26 @@ const closeModal = () => {
             <slot />
         </span>
 
-        <DialogModal :show="confirmingPassword" @close="closeModal">
+        <DialogModal max-width="md" :show="confirmingPassword" @close="closeModal">
             <template #title>
                 {{ title }}
             </template>
 
             <template #content>
-                {{ content }}
+                <p>{{ content }}</p>
 
-                <div class="mt-4">
+                <div class="mt-3">
                     <TextInput
                         ref="passwordInput"
                         v-model="form.password"
                         type="password"
-                        class="mt-1 block w-3/4"
                         placeholder="Password"
+                        aria-label="Password"
                         autocomplete="current-password"
                         @keyup.enter="confirmPassword"
                     />
 
-                    <InputError :message="form.error" class="mt-2" />
+                    <InputError :message="form.error" class="mt-1" />
                 </div>
             </template>
 
@@ -105,8 +106,7 @@ const closeModal = () => {
                 </SecondaryButton>
 
                 <PrimaryButton
-                    class="ms-3"
-                    :class="{ 'opacity-25': form.processing }"
+                    type="button"
                     :disabled="form.processing"
                     @click="confirmPassword"
                 >

@@ -3,6 +3,10 @@
         <li v-for="(item, index) in items" :key="index" class="recommendation-item">
             <div class="d-flex justify-content-between align-items-start gap-2">
                 <span class="recommendation-action">
+                    <template v-if="detailed">
+                        <span v-if="item.type" class="badge me-2" :class="recommendationClass(item.type)">{{ item.type }}</span>
+                        <span v-if="item.category" class="badge badge-dim bg-outline-secondary me-2">{{ item.category }}</span>
+                    </template>
                     {{ item.action }}
                     <span v-if="compact && item.description" class="recommendation-inline text-soft">— {{ item.description }}</span>
                 </span>
@@ -14,6 +18,9 @@
                     <span v-if="item.urgency_days !== null && item.urgency_days !== undefined" class="badge badge-dim bg-outline-secondary">
                         {{ formatDays(item.urgency_days) }}
                     </span>
+                    <span v-if="detailed && item.estimated_impact" class="badge badge-dim bg-outline-secondary">
+                        {{ item.estimated_impact }} impact
+                    </span>
                     <span v-if="item.source" class="text-soft">{{ item.source }}</span>
                 </div>
             </template>
@@ -22,7 +29,7 @@
 </template>
 
 <script setup>
-import { formatDays, priorityClass } from '@/Components/Field/analyticsFormat';
+import { formatDays, priorityClass, recommendationClass } from '@/format';
 
 defineProps({
     items: {
@@ -30,6 +37,10 @@ defineProps({
         default: () => [],
     },
     compact: {
+        type: Boolean,
+        default: false,
+    },
+    detailed: {
         type: Boolean,
         default: false,
     },

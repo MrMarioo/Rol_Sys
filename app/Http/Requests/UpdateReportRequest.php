@@ -2,9 +2,11 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\ReportType;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
-class UpdateReportRequest extends FormRequest
+final class UpdateReportRequest extends FormRequest
 {
     public function authorize(): bool
     {
@@ -15,10 +17,13 @@ class UpdateReportRequest extends FormRequest
     {
         return [
             'title' => ['required', 'string', 'max:255'],
-            'type' => ['required', 'string', 'in:weekly_summary,monthly_summary,problem_report,crop_status,comparative'],
+            'type' => ['required', Rule::enum(type: ReportType::class)],
             'description' => ['nullable', 'string'],
             'fields_included' => ['required', 'array', 'min:1'],
-            'fields_included.*' => ['integer', 'exists:fields,id'],
+            'fields_included.*' => [
+                'integer',
+                Rule::exists(table: 'fields', column: 'id')->where('user_id', $this->user()->id),
+            ],
             'parameters' => ['required', 'array'],
         ];
     }

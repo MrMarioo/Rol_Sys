@@ -9,7 +9,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
 /**
  * @mixin Field
  */
-class FieldResource extends JsonResource
+final class FieldResource extends JsonResource
 {
     public function toArray(Request $request): array
     {

@@ -2,25 +2,37 @@
 
 namespace App\Models;
 
-use App\Traits\OrderableTrait;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Illuminate\Database\Eloquent\Builder;
 
-class Crop extends Model
+/**
+ * @property int $id
+ * @property string $name
+ * @property string|null $description
+ * @property array<string, mixed>|null $optimal_conditions
+ * @property-read FieldCrop $pivot
+ * @property-read Collection<int, Field> $fields
+ */
+final class Crop extends Model
 {
-    use HasFactory, OrderableTrait;
+    use HasFactory;
 
     protected $fillable = ['name', 'description', 'optimal_conditions'];
 
-    protected $casts = [
-        'optimal_conditions' => 'array',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'optimal_conditions' => 'array',
+        ];
+    }
 
+    /** @return BelongsToMany<Field, $this, FieldCrop> */
     public function fields(): BelongsToMany
     {
         return $this->belongsToMany(Field::class, 'field_crops')
+            ->using(FieldCrop::class)
             ->withPivot(
                 'planting_date',
                 'expected_harvest_date',
@@ -29,19 +41,5 @@ class Crop extends Model
                 'status',
             )
             ->withTimestamps();
-    }
-    public function getSelect2labelAttribute(): string
-    {
-        return $this->name;
-    }
-    public function scopeQuerySearch(Builder $query): void
-    {
-        $query
-            ->when(request()->input('term'), function ($query, $search) {
-                $query->where(
-                    fn($q) => $q->where('name', 'like', '%' . $search . '%'),
-                );
-            })
-            ->queryOrder();
     }
 }

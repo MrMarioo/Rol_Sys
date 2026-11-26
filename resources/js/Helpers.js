@@ -1,4 +1,4 @@
-import { router, usePage } from '@inertiajs/vue3';
+import { router } from '@inertiajs/vue3';
 import { watch } from 'vue';
 import Swal from 'sweetalert2';
 
@@ -16,15 +16,6 @@ function watchForm(form) {
 }
 function filterParam(name) {
     return new URLSearchParams(location.search).get(`filter[${name}]`);
-}
-function auth() {
-    return usePage().props.auth.user;
-}
-function numberFormat(number) {
-    return number.toLocaleString('en-US', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-    });
 }
 const ConfirmModal = Swal.mixin({
     icon: 'info',
@@ -45,4 +36,4 @@ const Toast = Swal.mixin({
     },
 });
 
-export { watchForm, filterParam, auth, numberFormat, ConfirmModal, Toast };
+export { watchForm, filterParam, ConfirmModal, Toast };

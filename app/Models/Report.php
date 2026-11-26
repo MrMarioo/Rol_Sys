@@ -2,11 +2,28 @@
 
 namespace App\Models;
 
+use App\Enums\ReportStatus;
+use App\Enums\ReportType;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
-class Report extends Model
+/**
+ * @property int $id
+ * @property int $user_id
+ * @property string $title
+ * @property string $type
+ * @property string|null $description
+ * @property array<int, int> $fields_included
+ * @property array<string, mixed> $parameters
+ * @property array<string, mixed>|null $content
+ * @property ReportStatus $status
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property-read User $user
+ */
+final class Report extends Model
 {
     use HasFactory;
 
@@ -21,26 +38,24 @@ class Report extends Model
         'status',
     ];
 
-    protected $casts = [
-        'fields_included' => 'array',
-        'parameters' => 'array',
-        'content' => 'array',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'fields_included' => 'array',
+            'parameters' => 'array',
+            'content' => 'array',
+            'status' => ReportStatus::class,
+        ];
+    }
 
+    /** @return BelongsTo<User, $this> */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
-    public function isDraft(): bool
+
+    public function typeLabel(): string
     {
-        return $this->status === 'draft';
-    }
-    public function isGenerated(): bool
-    {
-        return $this->status === 'generated';
-    }
-    public function isArchived(): bool
-    {
-        return $this->status === 'archived';
+        return ReportType::tryFrom($this->type)?->label() ?? $this->type;
     }
 }

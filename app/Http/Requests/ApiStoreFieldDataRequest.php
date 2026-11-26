@@ -3,18 +3,19 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
-class ApiStoreFieldDataRequest extends FormRequest
+final class ApiStoreFieldDataRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true;
+        return $this->user() !== null;
     }
 
     public function rules(): array
     {
         return [
-            'field_id' => ['required', 'exists:fields,id'],
+            'field_id' => ['required', Rule::exists(table: 'fields', column: 'id')->where('user_id', $this->user()->id)],
             'collection_date' => ['required', 'date'],
             'data_type' => ['required', 'in:ndvi,soil_moisture'],
             'data.ndvi_values' => ['required_if:data_type,ndvi', 'array', 'size:100'],
@@ -23,11 +24,11 @@ class ApiStoreFieldDataRequest extends FormRequest
             'data.moisture_values.*' => ['numeric', 'between:0,1'],
             'latitude' => ['required', 'numeric', 'between:-90,90'],
             'longitude' => ['required', 'numeric', 'between:-180,180'],
-            'metadata' => ['required', 'array'],
-            'metadata.device' => ['required', 'string'],
-            'metadata.camera' => ['sometimes', 'string'],
+            'metadata' => ['required', 'array', 'max:20'],
+            'metadata.device' => ['required', 'string', 'max:255'],
+            'metadata.camera' => ['sometimes', 'string', 'max:255'],
             'metadata.height' => ['sometimes', 'numeric', 'min:0'],
-            'metadata.weather' => ['sometimes', 'array'],
+            'metadata.weather' => ['sometimes', 'array', 'max:20'],
         ];
     }
 }

@@ -5,7 +5,13 @@
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start">
                         <span class="reading-label">{{ reading.label }}</span>
-                        <em v-if="reading.trend" :class="trendIcon(reading.trend)" class="icon ni reading-trend"></em>
+                        <em
+                            v-if="reading.trend"
+                            :class="trendIcon(reading.trend)"
+                            class="icon ni reading-trend"
+                            role="img"
+                            :aria-label="`Trend: ${reading.trend}`"
+                        ></em>
                     </div>
                     <div class="reading-value" :class="{ 'reading-value-text': reading.kind === 'text' }">
                         {{ reading.display }}

@@ -5,7 +5,7 @@ namespace App\Notifications;
 use App\Models\Report;
 use Illuminate\Notifications\Notification;
 
-class ReportGenerated extends Notification
+final class ReportGenerated extends Notification
 {
     public function __construct(
         public readonly Report $report,
@@ -19,10 +19,10 @@ class ReportGenerated extends Notification
     public function toArray(object $notifiable): array
     {
         return [
-            'title' => 'Raport wygenerowany',
-            'message' => sprintf('Raport „%s” jest gotowy do pobrania.', $this->report->title),
+            'title' => 'Report generated',
+            'message' => sprintf('Report "%s" is ready to download.', $this->report->title),
             'level' => 'success',
-            'url' => route('reports.show', $this->report->id, false),
+            'url' => route(name: 'reports.show', parameters: $this->report->id, absolute: false),
         ];
     }
 }

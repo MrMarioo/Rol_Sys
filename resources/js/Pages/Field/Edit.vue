@@ -1,11 +1,12 @@
 <template>
+    <Head :title="`Edit ${field.name}`" />
     <div>
         <div class="nk-block-head nk-block-head-sm">
             <div class="nk-block-between">
                 <div class="nk-block-head-content">
                     <h3 class="nk-block-title page-title">Edit Field</h3>
                     <div class="nk-block-des text-soft">
-                        <Link href="/fields" class="btn btn-outline-primary btn-sm">
+                        <Link :href="route('fields.index')" class="btn btn-outline-primary btn-sm">
                             <em class="icon ni ni-arrow-left me-1"></em>
                             Back to Fields
                         </Link>
@@ -17,7 +18,6 @@
         <div class="nk-block">
             <div class="card">
                 <div class="card-inner">
-                    <button @click="testFunc">TEST</button>
                     <form @submit.prevent="saveField">
                         <div class="row g-4">
                             <div class="col-12">
@@ -105,7 +105,7 @@
                                     <div class="form-control-wrap">
                                         <select class="form-select" id="field-status" v-model="form.status" required>
                                             <option v-for="status in statuses" :key="status" :value="status">
-                                                {{ formatStatus(status) }}
+                                                {{ formatLabel(status) }}
                                             </option>
                                         </select>
                                     </div>
@@ -136,9 +136,9 @@
                                         <button
                                             type="submit"
                                             class="btn btn-primary p-3"
-                                            :disabled="isLoading || !form.name || !form.size || !form.boundaries"
+                                            :disabled="form.processing || !form.name || !form.size || !form.boundaries"
                                         >
-                                            <div v-if="isLoading" class="spinner-border spinner-border-sm me-1" role="status"></div>
+                                            <div v-if="form.processing" class="spinner-border spinner-border-sm me-1" role="status"></div>
                                             <em v-else class="icon ni ni-save me-1"></em>
                                             <span>Update Field</span>
                                         </button>
@@ -153,103 +153,51 @@
     </div>
 </template>
 
-<script>
-import { useForm, Link } from '@inertiajs/vue3';
-import { onMounted, ref } from 'vue';
+<script setup>
+import { Head, Link, useForm } from '@inertiajs/vue3';
 import { FieldStatus } from '@/Enum';
-import Swal from 'sweetalert2';
+import { Toast } from '@/Helpers';
+import { formatLabel } from '@/format';
 import FieldMap from '@/Components/FieldMap.vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 
-export default {
-    layout: AppLayout,
-    components: {
-        FieldMap,
-        Link,
+defineOptions({ layout: AppLayout });
+
+const props = defineProps({
+    field: {
+        type: Object,
+        required: true,
     },
-    props: {
-        field: {
-            type: Object,
-            required: true,
-        },
-        statuses: {
-            type: Array,
-            default: () => [],
-        },
+    statuses: {
+        type: Array,
+        default: () => [],
     },
-    setup(props) {
-        const isLoading = ref(false);
+});
 
-        const form = useForm({
-            id: props.field.id,
-            name: props.field.name,
-            location: props.field.location,
-            size: props.field.size,
-            description: props.field.description,
-            boundaries: props.field.boundaries,
-            status: props.field.status || FieldStatus.Active,
-            crop_id: props.field.crop_id || [],
-            _method: 'PUT', // Laravel method spoofing
-        });
+const form = useForm({
+    id: props.field.id,
+    name: props.field.name,
+    location: props.field.location,
+    size: props.field.size,
+    description: props.field.description,
+    boundaries: props.field.boundaries,
+    status: props.field.status || FieldStatus.Active,
+    crop_id: props.field.crop_id || [],
+    _method: 'PUT',
+});
 
-        const updateFieldSize = (area) => {
-            form.size = area;
-        };
+const updateFieldSize = (area) => {
+    form.size = area;
+};
 
-        const formatStatus = (status) => {
-            if (status === 'active') return 'Active';
-            if (status === 'inactive') return 'Inactive';
-            return status.charAt(0).toUpperCase() + status.slice(1);
-        };
+const saveField = () => {
+    if (!form.boundaries) {
+        Toast.fire({ icon: 'warning', title: 'Please ensure the field has valid boundaries.' });
+        return;
+    }
 
-        const saveField = () => {
-            if (!form.boundaries) {
-                Swal.fire({
-                    title: 'No Field Boundaries',
-                    text: 'Please ensure the field has valid boundaries.',
-                    icon: 'warning',
-                    confirmButtonText: 'OK',
-                });
-                return;
-            }
-
-            isLoading.value = true;
-
-            form.post(route('fields.update', props.field.id), {
-                preserveScroll: true,
-                onSuccess: () => {
-                    Swal.fire({
-                        title: 'Field Updated',
-                        text: 'The field has been updated successfully.',
-                        icon: 'success',
-                        confirmButtonText: 'OK',
-                    }).then(() => {
-                        window.location.href = route('fields.show', props.field.id);
-                    });
-                },
-                onError: () => {
-                    isLoading.value = false;
-                },
-                onFinish: () => {
-                    isLoading.value = false;
-                },
-            });
-        };
-
-        const testFunc = () => {
-            console.log('Form status:', form.status);
-            console.log('Field data:', props.field);
-            console.log('Available statuses:', props.statuses);
-        };
-
-        return {
-            form,
-            saveField,
-            updateFieldSize,
-            isLoading,
-            testFunc,
-            formatStatus,
-        };
-    },
+    form.post(route('fields.update', props.field.id), {
+        preserveScroll: true,
+    });
 };
 </script>

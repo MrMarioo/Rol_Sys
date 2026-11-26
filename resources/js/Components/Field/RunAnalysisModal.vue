@@ -1,6 +1,6 @@
 <script setup>
-import { computed, ref, watch } from 'vue';
-import { useForm, usePage } from '@inertiajs/vue3';
+import { watch } from 'vue';
+import { useForm } from '@inertiajs/vue3';
 import DialogModal from '@/Components/DialogModal.vue';
 import InputError from '@/Components/InputError.vue';
 
@@ -21,8 +21,6 @@ const props = defineProps({
 
 const emit = defineEmits(['close']);
 
-const page = usePage();
-
 const form = useForm({
     start_date: '',
     end_date: '',
@@ -31,19 +29,14 @@ const form = useForm({
     prediction_days: 7,
 });
 
-const submitted = ref(false);
-
 watch(
     () => props.show,
     (visible) => {
         if (visible) {
-            submitted.value = false;
             form.clearErrors();
         }
     },
 );
-
-const flashError = computed(() => (submitted.value ? page.props.flash?.error ?? null : null));
 
 const sensitivityLabels = {
     low: 'Low (fewer alerts)',
@@ -59,23 +52,17 @@ const close = () => {
 };
 
 const submit = () => {
-    submitted.value = false;
     form.post(route('analytics.analyze', props.fieldId), {
         preserveScroll: true,
-        onFinish: () => {
-            submitted.value = true;
-        },
     });
 };
 </script>
 
 <template>
-    <DialogModal :show="show" max-width="2xl" :closeable="!form.processing" @close="close">
+    <DialogModal :show="show" max-width="lg" :closeable="!form.processing" @close="close">
         <template #title>Run analysis</template>
 
         <template #content>
-            <div v-if="flashError" class="alert alert-danger">{{ flashError }}</div>
-
             <form id="run-analysis-form" @submit.prevent="submit">
                 <div class="row g-3">
                     <div class="col-md-6">

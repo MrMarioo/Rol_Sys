@@ -1,5 +1,5 @@
 <template>
-    <AppLayout :title="'Edit Field Data'">
+    <AppLayout title="Edit Field Data">
         <div class="nk-block-head nk-block-head-sm">
             <div class="nk-block-between g-3">
                 <div class="nk-block-head-content">
@@ -78,13 +78,9 @@
                                             required
                                         >
                                             <option value="">Select data type</option>
-                                            <option value="soil_moisture">Soil Moisture</option>
-                                            <option value="ndvi">Vegetation Index (NDVI)</option>
-                                            <option value="temperature">Temperature</option>
-                                            <option value="pest_detection">Pest Detection</option>
-                                            <option value="weed_detection">Weed Detection</option>
-                                            <option value="crop_health">Crop Health</option>
-                                            <option value="other">Other</option>
+                                            <option v-for="option in DATA_TYPE_OPTIONS" :key="option.value" :value="option.value">
+                                                {{ option.label }}
+                                            </option>
                                         </select>
                                         <div v-if="form.errors.data_type" class="form-error">{{ form.errors.data_type }}</div>
                                     </div>
@@ -92,14 +88,16 @@
                             </div>
                             <div class="col-lg-6">
                                 <div class="form-group">
-                                    <label class="form-label">Location (optional)</label>
+                                    <label class="form-label" for="latitude">Location (optional)</label>
                                     <div class="row g-2">
                                         <div class="col-sm-6">
                                             <div class="form-control-wrap">
                                                 <input
+                                                    id="latitude"
                                                     type="number"
                                                     step="0.0000001"
                                                     placeholder="Latitude"
+                                                    aria-label="Latitude"
                                                     v-model="form.latitude"
                                                     class="form-control"
                                                     :class="{ error: form.errors.latitude }"
@@ -110,9 +108,11 @@
                                         <div class="col-sm-6">
                                             <div class="form-control-wrap">
                                                 <input
+                                                    id="longitude"
                                                     type="number"
                                                     step="0.0000001"
                                                     placeholder="Longitude"
+                                                    aria-label="Longitude"
                                                     v-model="form.longitude"
                                                     class="form-control"
                                                     :class="{ error: form.errors.longitude }"
@@ -126,11 +126,11 @@
 
                             <div class="col-12">
                                 <div class="form-group">
-                                    <label class="form-label">Measurement Data *</label>
+                                    <label class="form-label" for="data-json">Measurement Data *</label>
                                     <div class="form-control-wrap mb-3">
                                         <div class="d-flex justify-content-between">
                                             <div>
-                                                <span class="badge bg-primary">{{ dataFormatDescription }}</span>
+                                                <span class="badge bg-primary">{{ dataFormatDescription(form.data_type) }}</span>
                                             </div>
                                             <div>
                                                 <button type="button" class="btn btn-sm btn-outline-primary" @click="generateSampleData">
@@ -141,6 +141,7 @@
                                     </div>
                                     <div class="form-control-wrap">
                                         <textarea
+                                            id="data-json"
                                             v-model="dataInput"
                                             class="form-control code-textarea"
                                             :class="{ error: form.errors.data }"
@@ -157,9 +158,10 @@
 
                             <div class="col-12">
                                 <div class="form-group">
-                                    <label class="form-label">Metadata (optional)</label>
+                                    <label class="form-label" for="metadata-json">Metadata (optional)</label>
                                     <div class="form-control-wrap">
                                         <textarea
+                                            id="metadata-json"
                                             v-model="metadataInput"
                                             class="form-control code-textarea"
                                             :class="{ error: form.errors.metadata }"
@@ -175,7 +177,7 @@
 
                             <div class="col-12">
                                 <div class="form-group">
-                                    <button type="submit" class="btn btn-primary" :disabled="form.processing || jsonError || metadataError">
+                                    <button type="submit" class="btn btn-primary" :disabled="form.processing || !!jsonError || !!metadataError">
                                         <span v-if="form.processing">Saving...</span>
                                         <span v-else>Save Changes</span>
                                     </button>
@@ -190,9 +192,10 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue';
+import { ref, watch } from 'vue';
 import { Link, useForm } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
+import { DATA_TYPE_OPTIONS, dataFormatDescription, parseJson, sampleDataJson } from '@/Components/FieldData/fieldDataTypes';
 
 const props = defineProps({
     fieldData: Object,
@@ -200,54 +203,19 @@ const props = defineProps({
 });
 
 const form = useForm({
-    field_id: '',
-    collection_date: '',
-    data_type: '',
-    data: {},
-    latitude: null,
-    longitude: null,
-    metadata: null,
+    field_id: props.fieldData.field_id,
+    collection_date: props.fieldData.collection_date,
+    data_type: props.fieldData.data_type,
+    data: props.fieldData.data ?? {},
+    latitude: props.fieldData.latitude,
+    longitude: props.fieldData.longitude,
+    metadata: props.fieldData.metadata,
 });
 
-const dataInput = ref('');
-const metadataInput = ref('');
+const dataInput = ref(JSON.stringify(props.fieldData.data ?? {}, null, 4));
+const metadataInput = ref(props.fieldData.metadata ? JSON.stringify(props.fieldData.metadata, null, 4) : '');
 const jsonError = ref('');
 const metadataError = ref('');
-
-onMounted(() => {
-    form.field_id = props.fieldData.field_id;
-    form.collection_date = props.fieldData.collection_date;
-    form.data_type = props.fieldData.data_type;
-    form.data = props.fieldData.data;
-    form.latitude = props.fieldData.latitude;
-    form.longitude = props.fieldData.longitude;
-    form.metadata = props.fieldData.metadata;
-
-    // Initialize text areas
-    dataInput.value = JSON.stringify(props.fieldData.data, null, 4);
-    if (props.fieldData.metadata) {
-        metadataInput.value = JSON.stringify(props.fieldData.metadata, null, 4);
-    }
-});
-
-const dataFormatDescription = computed(() => {
-    switch (form.data_type) {
-        case 'soil_moisture':
-            return 'Format: Time series with moisture readings';
-        case 'ndvi':
-            return 'Format: NDVI map or time series';
-        case 'temperature':
-            return 'Format: Time series with temperature readings';
-        case 'pest_detection':
-            return 'Format: Detected pests with locations';
-        case 'weed_detection':
-            return 'Format: Detected weeds with locations';
-        case 'crop_health':
-            return 'Format: Crop health index';
-        default:
-            return 'Format: JSON data';
-    }
-});
 
 const validateJsonInput = () => {
     if (!dataInput.value.trim()) {
@@ -256,11 +224,10 @@ const validateJsonInput = () => {
         return;
     }
 
-    try {
-        form.data = JSON.parse(dataInput.value);
-        jsonError.value = '';
-    } catch (e) {
-        jsonError.value = 'Invalid JSON format';
+    const { valid, data } = parseJson(dataInput.value);
+    jsonError.value = valid ? '' : 'Invalid JSON format';
+    if (valid) {
+        form.data = data;
     }
 };
 
@@ -271,99 +238,25 @@ const validateMetadataInput = () => {
         return;
     }
 
-    try {
-        form.metadata = JSON.parse(metadataInput.value);
-        metadataError.value = '';
-    } catch (e) {
-        metadataError.value = 'Invalid JSON format';
+    const { valid, data } = parseJson(metadataInput.value);
+    metadataError.value = valid ? '' : 'Invalid JSON format';
+    if (valid) {
+        form.metadata = data;
     }
 };
 
 const generateSampleData = () => {
-    let sampleData = {};
-
-    switch (form.data_type) {
-        case 'soil_moisture':
-            sampleData = {
-                readings: [
-                    { timestamp: new Date().toISOString(), value: 35.2, depth: 10 },
-                    { timestamp: new Date(Date.now() - 3600000).toISOString(), value: 34.8, depth: 10 },
-                    { timestamp: new Date(Date.now() - 7200000).toISOString(), value: 34.5, depth: 10 },
-                ],
-                unit: 'percent',
-                average: 34.83,
-            };
-            break;
-        case 'ndvi':
-            sampleData = {
-                grid: [
-                    [0.65, 0.67, 0.71, 0.69],
-                    [0.62, 0.63, 0.64, 0.66],
-                    [0.6, 0.61, 0.63, 0.62],
-                    [0.59, 0.58, 0.61, 0.6],
-                ],
-                min: 0.58,
-                max: 0.71,
-                average: 0.63,
-            };
-            break;
-        case 'temperature':
-            sampleData = {
-                readings: [
-                    { timestamp: new Date().toISOString(), temperature: 22.5 },
-                    { timestamp: new Date(Date.now() - 3600000).toISOString(), temperature: 21.8 },
-                    { timestamp: new Date(Date.now() - 7200000).toISOString(), temperature: 21.2 },
-                ],
-                unit: 'celsius',
-                average: 21.83,
-            };
-            break;
-        case 'pest_detection':
-            sampleData = {
-                detections: [
-                    { type: 'aphid', count: 15, severity: 'medium', location: [51.123, 19.456] },
-                    { type: 'beetle', count: 3, severity: 'low', location: [51.124, 19.457] },
-                ],
-                summary: {
-                    total_count: 18,
-                    highest_severity: 'medium',
-                },
-            };
-            break;
-        case 'weed_detection':
-            sampleData = {
-                detections: [
-                    { type: 'thistle', coverage: 0.05, location: [51.123, 19.456] },
-                    { type: 'nettle', coverage: 0.03, location: [51.124, 19.457] },
-                ],
-                total_coverage: 0.08,
-            };
-            break;
-        case 'crop_health':
-            sampleData = {
-                health_index: 0.82,
-                areas: [
-                    { location: [51.123, 19.456], index: 0.78, issue: 'chlorosis' },
-                    { location: [51.124, 19.457], index: 0.85, issue: null },
-                ],
-            };
-            break;
-        default:
-            sampleData = { value: 'Sample data', timestamp: new Date().toISOString() };
-            break;
-    }
-
-    dataInput.value = JSON.stringify(sampleData, null, 4);
+    dataInput.value = sampleDataJson(form.data_type);
     validateJsonInput();
 };
 
 watch(
     () => form.data_type,
-    () => {
-        if (form.data_type && (!dataInput.value || jsonError.value)) {
+    (type) => {
+        if (type && (!dataInput.value || jsonError.value)) {
             generateSampleData();
         }
-    }
+    },
 );
 
 const submitForm = () => {

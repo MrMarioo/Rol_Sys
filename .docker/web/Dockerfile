@@ -1,18 +1,15 @@
 FROM dunglas/frankenphp:1.1-php8.3
 
 ENV SERVER_NAME=:80
-ENV XDG_CONFIG_HOME=/app
 
 ADD  ./.docker/web/Caddyfile /etc/caddy/Caddyfile
 
 # Caddy requires an additional capability to bind to port 80 and 443
 RUN setcap CAP_NET_BIND_SERVICE=+eip /usr/local/bin/frankenphp
 
-RUN apt update
-RUN apt-get update
-
-RUN apt install -y vim git default-mysql-client nano cron supervisor libreoffice
-RUN apt-get install zlib1g-dev
+RUN apt-get update \
+    && apt-get install -y vim git default-mysql-client nano cron supervisor zlib1g-dev \
+    && rm -rf /var/lib/apt/lists/*
 
 # add additional extensions here:
 RUN install-php-extensions \
@@ -29,8 +26,9 @@ ADD ./.docker/web/supervisor/conf.d/laravel-worker.conf /etc/supervisor/conf.d/
 # NODE
 ARG INSTALL_NODE=false
 RUN if [ ${INSTALL_NODE} = true ]; then \
-    curl -fsSL https://deb.nodesource.com/setup_21.x | bash - &&\
-    apt install -y nodejs \
+    curl -fsSL https://deb.nodesource.com/setup_21.x | bash - && \
+    apt-get install -y nodejs && \
+    rm -rf /var/lib/apt/lists/* \
 ;fi
 
 # SPX
@@ -39,7 +37,6 @@ ARG INSTALL_SPX=false
 COPY .docker/web/spx.ini /usr/local/etc/php/conf.d/spx.ini
 
 RUN if [ ${INSTALL_SPX} = true ]; then \
-    apt install -y git && \
     mkdir -p /spx-code && \
     cd /spx-code && \
     git clone https://github.com/NoiseByNorthwest/php-spx.git . && \
@@ -72,16 +69,18 @@ RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
 ARG USERNAME=root
 ARG UID=0
 ARG GROUP=root
-ARG ROOTPASS=l3tm31n
+ARG ROOTPASS
 
-RUN usermod --password $(echo ${ROOTPASS} | openssl passwd -1 -stdin) root
+RUN if [ -n "${ROOTPASS}" ]; then \
+    usermod --password "$(echo "${ROOTPASS}" | openssl passwd -1 -stdin)" root \
+;fi
 
 RUN if [ ${USERNAME} != "root" ]; then \
     useradd -ms /bin/bash ${USERNAME} -u ${UID} \
 ;fi
 
-# Caddy requires write access to /data/caddy and /config/caddy
-RUN chown -R ${USERNAME}:${GROUP} /data/caddy && chown -R ${USERNAME}:${GROUP} /config/caddy
+# Caddy, Composer and PsySH write to XDG_DATA_HOME (/data) and XDG_CONFIG_HOME (/config)
+RUN chown -R ${USERNAME}:${GROUP} /data /config
 
 USER ${USERNAME}:${GROUP}
 

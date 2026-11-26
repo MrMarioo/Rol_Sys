@@ -6,10 +6,20 @@ defineProps({
 
 <template>
     <div>
-        <transition leave-active-class="transition ease-in duration-1000" leave-from-class="opacity-100" leave-to-class="opacity-0">
-            <div v-show="on" class="text-sm text-gray-600">
+        <Transition name="action-message">
+            <div v-show="on" class="small text-muted">
                 <slot />
             </div>
-        </transition>
+        </Transition>
     </div>
 </template>
+
+<style scoped>
+.action-message-leave-active {
+    transition: opacity 1s ease-in;
+}
+
+.action-message-leave-to {
+    opacity: 0;
+}
+</style>

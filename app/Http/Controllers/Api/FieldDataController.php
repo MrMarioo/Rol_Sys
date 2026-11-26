@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\ApiStoreFieldDataRequest;
 use App\Http\Requests\DroneStoreFieldDataRequest;
 use App\Http\Resources\FieldDataResource;
+use App\Http\Resources\FieldResource;
 use App\Jobs\AnalyzeFieldDataJob;
 use App\Models\Field;
 use App\Models\FieldData;
@@ -51,6 +52,8 @@ final class FieldDataController extends Controller
 
     public function show(FieldData $fieldData): JsonResponse
     {
+        $this->authorize('view', $fieldData);
+
         return response()->json(
             data: ['data' => FieldDataResource::make(resource: $fieldData->load('field'))->resolve()],
             status: HttpResponse::HTTP_OK,
@@ -59,6 +62,8 @@ final class FieldDataController extends Controller
 
     public function forField(Request $request, Field $field): JsonResponse
     {
+        $this->authorize('viewData', $field);
+
         $fieldData = $field->fieldData()
             ->when(
                 $request->filled('data_type'),
@@ -77,7 +82,7 @@ final class FieldDataController extends Controller
 
         return response()->json(
             data: [
-                'field' => $field,
+                'field' => FieldResource::make($field)->resolve(),
                 'data' => FieldDataResource::collection(resource: $fieldData),
                 'count' => $fieldData->count(),
             ],

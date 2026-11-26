@@ -9,7 +9,7 @@ use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 
-class FieldDataSeeder extends Seeder
+final class FieldDataSeeder extends Seeder
 {
     private const DAYS = 90;
 
@@ -25,7 +25,7 @@ class FieldDataSeeder extends Seeder
 
         mt_srand();
 
-        $this->command?->info(sprintf('Created field data for %d fields (%d days)', $fields->count(), self::DAYS));
+        $this->command->info(sprintf('Created field data for %d fields (%d days)', $fields->count(), self::DAYS));
     }
 
     private function seedField(Field $field): void
@@ -373,11 +373,22 @@ class FieldDataSeeder extends Seeder
 
     private function calculateNdviByGrowthStage($daysFromPlanting): float
     {
-        if ($daysFromPlanting < 14) return 0.25;
-        if ($daysFromPlanting < 30) return 0.45;
-        if ($daysFromPlanting < 60) return 0.75;
-        if ($daysFromPlanting < 90) return 0.85;
-        if ($daysFromPlanting < 110) return 0.65;
+        if ($daysFromPlanting < 14) {
+            return 0.25;
+        }
+        if ($daysFromPlanting < 30) {
+            return 0.45;
+        }
+        if ($daysFromPlanting < 60) {
+            return 0.75;
+        }
+        if ($daysFromPlanting < 90) {
+            return 0.85;
+        }
+        if ($daysFromPlanting < 110) {
+            return 0.65;
+        }
+
         return 0.45;
     }
 
@@ -392,36 +403,68 @@ class FieldDataSeeder extends Seeder
 
     private function calculateHeightByGrowthStage($daysFromPlanting): float
     {
-        if ($daysFromPlanting < 14) return mt_rand(2, 5);
-        if ($daysFromPlanting < 30) return mt_rand(10, 20);
-        if ($daysFromPlanting < 60) return mt_rand(30, 60);
-        if ($daysFromPlanting < 90) return mt_rand(70, 90);
+        if ($daysFromPlanting < 14) {
+            return mt_rand(2, 5);
+        }
+        if ($daysFromPlanting < 30) {
+            return mt_rand(10, 20);
+        }
+        if ($daysFromPlanting < 60) {
+            return mt_rand(30, 60);
+        }
+        if ($daysFromPlanting < 90) {
+            return mt_rand(70, 90);
+        }
+
         return mt_rand(85, 95);
     }
 
     private function getGrowthStage($daysFromPlanting): string
     {
-        if ($daysFromPlanting < 14) return 'germination';
-        if ($daysFromPlanting < 30) return 'early_vegetative';
-        if ($daysFromPlanting < 60) return 'vegetative';
-        if ($daysFromPlanting < 90) return 'flowering';
-        if ($daysFromPlanting < 110) return 'grain_filling';
+        if ($daysFromPlanting < 14) {
+            return 'germination';
+        }
+        if ($daysFromPlanting < 30) {
+            return 'early_vegetative';
+        }
+        if ($daysFromPlanting < 60) {
+            return 'vegetative';
+        }
+        if ($daysFromPlanting < 90) {
+            return 'flowering';
+        }
+        if ($daysFromPlanting < 110) {
+            return 'grain_filling';
+        }
+
         return 'maturity';
     }
 
     private function getBbchCode($daysFromPlanting): int
     {
-        if ($daysFromPlanting < 14) return mt_rand(0, 9);
-        if ($daysFromPlanting < 30) return mt_rand(10, 19);
-        if ($daysFromPlanting < 60) return mt_rand(20, 39);
-        if ($daysFromPlanting < 90) return mt_rand(51, 69);
-        if ($daysFromPlanting < 110) return mt_rand(71, 89);
+        if ($daysFromPlanting < 14) {
+            return mt_rand(0, 9);
+        }
+        if ($daysFromPlanting < 30) {
+            return mt_rand(10, 19);
+        }
+        if ($daysFromPlanting < 60) {
+            return mt_rand(20, 39);
+        }
+        if ($daysFromPlanting < 90) {
+            return mt_rand(51, 69);
+        }
+        if ($daysFromPlanting < 110) {
+            return mt_rand(71, 89);
+        }
+
         return mt_rand(90, 99);
     }
 
     private function getWeatherCondition($date): string
     {
         $conditions = ['sunny', 'partly_cloudy', 'cloudy', 'rainy'];
+
         return $conditions[array_rand($conditions)];
     }
 }

@@ -1,5 +1,5 @@
 <template>
-    <AppLayout :title="'Field Data Details'">
+    <AppLayout title="Field Data Details">
         <div class="nk-block-head nk-block-head-sm">
             <div class="nk-block-between g-3">
                 <div class="nk-block-head-content">
@@ -33,7 +33,6 @@
 
         <div class="nk-block">
             <div class="row g-gs">
-                <!-- Basic Information -->
                 <div class="col-lg-4">
                     <div class="card card-bordered h-100">
                         <div class="card-inner">
@@ -69,11 +68,11 @@
                                         <div class="nk-info-content">
                                             <div class="title">Data Type</div>
                                             <div class="lead-text">
-                                                <span class="badge bg-primary">{{ formatDataType(fieldData.data_type) }}</span>
+                                                <span class="badge bg-primary text-white">{{ formatDataType(fieldData.data_type) }}</span>
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="nk-info-item" v-if="fieldData.latitude && fieldData.longitude">
+                                    <div class="nk-info-item" v-if="isNumber(fieldData.latitude) && isNumber(fieldData.longitude)">
                                         <div class="nk-info-icon">
                                             <em class="icon ni ni-map-pin"></em>
                                         </div>
@@ -97,7 +96,6 @@
                     </div>
                 </div>
 
-                <!-- Data Visualization -->
                 <div class="col-lg-8">
                     <div class="card card-bordered h-100">
                         <div class="card-inner">
@@ -113,7 +111,6 @@
                     </div>
                 </div>
 
-                <!-- Metadata -->
                 <div class="col-12" v-if="fieldData.metadata">
                     <div class="card card-bordered">
                         <div class="card-inner">
@@ -137,49 +134,11 @@
 import { Link } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import DataVisualization from '@/Components/DataVisualization.vue';
+import { formatDataType, formatDate, formatDateTime, formatLocation, isNumber } from '@/format';
 
-// Single prop definition from controller
-const props = defineProps({
-    fieldData: Object
+defineProps({
+    fieldData: Object,
 });
-
-// Methods
-const formatDate = (dateString) => {
-    const options = { year: 'numeric', month: 'long', day: 'numeric' };
-    return new Date(dateString).toLocaleDateString('en-US', options);
-};
-
-const formatDateTime = (dateTimeString) => {
-    const options = {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-    };
-    return new Date(dateTimeString).toLocaleDateString('en-US', options);
-};
-
-const formatLocation = (lat, lng) => {
-    return `${parseFloat(lat).toFixed(5)}, ${parseFloat(lng).toFixed(5)}`;
-};
-
-const formatDataType = (type) => {
-    const typeMap = {
-        'soil_moisture': 'Soil Moisture',
-        'ndvi': 'NDVI',
-        'temperature': 'Temperature',
-        'pest_detection': 'Pest Detection',
-        'weed_detection': 'Weed Detection',
-        'crop_health': 'Crop Health',
-        'other': 'Other'
-    };
-
-    return typeMap[type] || type.replace(/_/g, ' ')
-        .split(' ')
-        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-        .join(' ');
-};
 </script>
 
 <style scoped>

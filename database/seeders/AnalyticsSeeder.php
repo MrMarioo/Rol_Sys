@@ -10,7 +10,7 @@ use Database\Factories\Support\AnalysisResultsBuilder;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Collection;
 
-class AnalyticsSeeder extends Seeder
+final class AnalyticsSeeder extends Seeder
 {
     private const WINDOW_DAYS = 14;
 
@@ -26,7 +26,7 @@ class AnalyticsSeeder extends Seeder
 
         mt_srand();
 
-        $this->command?->info(sprintf('Created %d analyses', $created));
+        $this->command->info(sprintf('Created %d analyses', $created));
     }
 
     private function seedField(Field $field): int

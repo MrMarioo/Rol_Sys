@@ -9,7 +9,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
 /**
  * @mixin FieldData
  */
-class FieldDataResource extends JsonResource
+final class FieldDataResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
@@ -20,7 +20,7 @@ class FieldDataResource extends JsonResource
                 relationship: 'field',
                 value: fn () => FieldResource::make($this->field)->resolve(),
             ),
-            'collection_date' => $this->collection_date?->format('Y-m-d'),
+            'collection_date' => $this->collection_date->format('Y-m-d'),
             'data_type' => $this->data_type,
             'data' => $this->data,
             'latitude' => $this->latitude,

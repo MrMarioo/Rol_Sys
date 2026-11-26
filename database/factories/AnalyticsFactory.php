@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 /**
  * @extends Factory<Analytics>
  */
-class AnalyticsFactory extends Factory
+final class AnalyticsFactory extends Factory
 {
     protected $model = Analytics::class;
 

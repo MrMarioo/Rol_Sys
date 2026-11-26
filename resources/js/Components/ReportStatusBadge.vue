@@ -1,58 +1,46 @@
 <template>
-    <span :class="badgeClass">
-        <em class="icon ni" :class="iconClass"></em>
-        {{ statusText }}
+    <span class="badge" :class="config.class">
+        <em class="icon ni" :class="config.icon"></em>
+        {{ config.text }}
     </span>
 </template>
 
-<script>
+<script setup>
 import { computed } from 'vue';
 
-export default {
-    props: {
-        status: {
-            type: String,
-            required: true
-        }
+const props = defineProps({
+    status: {
+        type: String,
+        required: true,
     },
-    setup(props) {
-        const statusConfig = {
-            draft: {
-                class: 'badge badge-outline-warning',
-                icon: 'ni-edit',
-                text: 'Draft'
-            },
-            generated: {
-                class: 'badge badge-outline-success',
-                icon: 'ni-check',
-                text: 'Generated'
-            },
-            archived: {
-                class: 'badge badge-outline-secondary',
-                icon: 'ni-archive',
-                text: 'Archived'
-            }
-        };
+});
 
-        const badgeClass = computed(() => {
-            return statusConfig[props.status]?.class || 'badge badge-outline-primary';
-        });
-
-        const iconClass = computed(() => {
-            return statusConfig[props.status]?.icon || 'ni-file-text';
-        });
-
-        const statusText = computed(() => {
-            return statusConfig[props.status]?.text || props.status;
-        });
-
-        return {
-            badgeClass,
-            iconClass,
-            statusText
-        };
-    }
+const STATUSES = {
+    draft: {
+        class: 'badge-outline-warning',
+        icon: 'ni-edit',
+        text: 'Draft',
+    },
+    generated: {
+        class: 'badge-outline-success',
+        icon: 'ni-check',
+        text: 'Generated',
+    },
+    archived: {
+        class: 'badge-outline-secondary',
+        icon: 'ni-archive',
+        text: 'Archived',
+    },
 };
+
+const config = computed(
+    () =>
+        STATUSES[props.status] ?? {
+            class: 'badge-outline-primary',
+            icon: 'ni-file-text',
+            text: props.status,
+        },
+);
 </script>
 
 <style scoped>

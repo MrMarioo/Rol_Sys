@@ -17,7 +17,7 @@
             <ol-vector-layer>
                 <ol-source-vector :projection="projection" :features="highlightedFeatures">
                     <ol-interaction-modify v-if="modifyEnabled" :features="selectedFeatures" @modifyend="modifyend" />
-                    <ol-interaction-draw v-if="drawEnabled" type="Polygon" :stopClick="true" @drawend="drawend" @drawstart="drawstart" />
+                    <ol-interaction-draw v-if="drawEnabled" type="Polygon" :stopClick="true" @drawend="drawend" />
                     <ol-interaction-snap v-if="modifyEnabled || drawEnabled" />
                 </ol-source-vector>
                 <ol-style>
@@ -33,6 +33,38 @@
                 </ol-style>
             </ol-interaction-select>
         </ol-map>
+
+        <div v-if="mode === 'create'" class="map-search">
+            <div class="input-group">
+                <input
+                    type="search"
+                    class="form-control"
+                    placeholder="Search for a place..."
+                    aria-label="Search for a place"
+                    v-model="searchQuery"
+                    @keydown.enter.prevent="searchLocation"
+                    @keydown.esc="clearSearchResults"
+                />
+                <button
+                    type="button"
+                    class="btn btn-primary"
+                    aria-label="Search"
+                    :disabled="isSearching || !searchQuery.trim()"
+                    @click="searchLocation"
+                >
+                    <span v-if="isSearching" class="spinner-border spinner-border-sm" role="status"></span>
+                    <em v-else class="icon ni ni-search"></em>
+                </button>
+            </div>
+            <ul v-if="searchResults.length > 0" class="list-group map-search-results">
+                <li v-for="result in searchResults" :key="result.place_id" class="list-group-item p-0">
+                    <button type="button" class="list-group-item-action map-search-result" @click="goToResult(result)">
+                        {{ result.display_name }}
+                    </button>
+                </li>
+            </ul>
+            <div v-else-if="searchMessage" class="map-search-message">{{ searchMessage }}</div>
+        </div>
 
         <div v-if="showControls" class="map-controls">
             <div class="control-group">
@@ -60,265 +92,253 @@
     </div>
 </template>
 
-<script>
-import { ref, onMounted, onBeforeUnmount, watch, computed } from 'vue';
-import { fromLonLat, toLonLat } from 'ol/proj';
+<script setup>
+import { ref, onMounted, watch } from 'vue';
+import { fromLonLat, toLonLat, transformExtent } from 'ol/proj';
 import { Collection } from 'ol';
 import Feature from 'ol/Feature';
 import Polygon from 'ol/geom/Polygon';
+import { Map, Layers, Sources, Interactions, Styles } from 'vue3-openlayers';
+import 'vue3-openlayers/styles.css';
+import { ConfirmModal } from '@/Helpers';
 
-export default {
-    name: 'FieldMap',
-    props: {
-        mode: {
-            type: String,
-            default: 'view',
-            validator: (value) => ['create', 'edit', 'view'].includes(value),
-        },
-        boundaries: {
-            type: Array,
-            default: () => [],
-        },
-        showControls: {
-            type: Boolean,
-            default: true,
-        },
-        height: {
-            type: String,
-            default: '500px',
-        },
-        areaInfo: {
-            type: Boolean,
-            default: true,
-        },
+const { OlMap, OlView } = Map;
+const { OlTileLayer, OlVectorLayer } = Layers;
+const { OlSourceXyz, OlSourceOsm, OlSourceVector } = Sources;
+const { OlInteractionModify, OlInteractionDraw, OlInteractionSnap, OlInteractionSelect } = Interactions;
+const { OlStyle, OlStyleStroke, OlStyleFill } = Styles;
+
+const props = defineProps({
+    mode: {
+        type: String,
+        default: 'view',
+        validator: (value) => ['create', 'edit', 'view'].includes(value),
     },
-    emits: ['update:boundaries', 'area-calculated', 'draw-start', 'draw-end', 'modify-end'],
-    setup(props, { emit }) {
-        const center = ref(fromLonLat([19.0, 52.0]));
-        const zoom = ref(6);
-        const projection = ref('EPSG:3857');
-        const rotation = ref(0);
-        const view = ref(null);
+    boundaries: {
+        type: Array,
+        default: () => [],
+    },
+    showControls: {
+        type: Boolean,
+        default: true,
+    },
+    height: {
+        type: String,
+        default: '500px',
+    },
+    areaInfo: {
+        type: Boolean,
+        default: true,
+    },
+});
 
-        const drawEnabled = ref(false);
-        const modifyEnabled = ref(false);
-        const showLabels = ref(true);
-        const highlightedFeatures = ref([]);
-        const selectedFeatures = ref(new Collection());
-        const currentFeature = ref(null);
-        const calculatedArea = ref(null);
+const emit = defineEmits(['update:boundaries', 'area-calculated', 'draw-start', 'draw-end', 'modify-end']);
 
-        const loadFieldBoundaries = (boundaries) => {
-            if (!boundaries || boundaries.length === 0) return;
+const center = ref(fromLonLat([19.0, 52.0]));
+const zoom = ref(6);
+const projection = ref('EPSG:3857');
+const rotation = ref(0);
+const view = ref(null);
 
-            try {
-                const mercatorCoords = boundaries.map((coord) => fromLonLat(coord));
+const drawEnabled = ref(false);
+const modifyEnabled = ref(false);
+const showLabels = ref(true);
+const highlightedFeatures = ref([]);
+const selectedFeatures = ref(new Collection());
+const calculatedArea = ref(null);
 
-                const polygon = new Polygon([mercatorCoords]);
-                const feature = new Feature(polygon);
+const searchQuery = ref('');
+const searchResults = ref([]);
+const searchMessage = ref(null);
+const isSearching = ref(false);
 
-                highlightedFeatures.value = [feature];
+const clearSearchResults = () => {
+    searchResults.value = [];
+    searchMessage.value = null;
+};
 
-                calculateArea(feature);
+const searchLocation = async () => {
+    const query = searchQuery.value.trim();
+    if (!query || isSearching.value) return;
 
-                if (view.value) {
-                    view.value.fit(polygon.getExtent(), {
-                        padding: [50, 50, 50, 50],
-                        duration: 1000,
-                    });
-                }
+    isSearching.value = true;
+    clearSearchResults();
 
-                if (props.mode === 'edit') {
-                    modifyEnabled.value = true;
-                    selectedFeatures.value.clear();
-                    selectedFeatures.value.push(feature);
-                }
-            } catch (error) {
-                console.error('Error loading field boundaries:', error);
-            }
-        };
-
-        const toggleDraw = () => {
-            if (highlightedFeatures.value.length > 0) {
-                if (confirm('Do you wanna clear current polygon?')) {
-                    resetMap();
-                    drawEnabled.value = true;
-                    emit('draw-start');
-                }
-            } else {
-                resetMap();
-                drawEnabled.value = true;
-                emit('draw-start');
-            }
-        };
-
-        const drawstart = (event) => {
-            try {
-                currentFeature.value = event.feature;
-            } catch (error) {
-                console.error('Error in drawstart:', error);
-            }
-        };
-
-        const drawend = (event) => {
-            try {
-                drawEnabled.value = false;
-                modifyEnabled.value = true;
-
-                highlightedFeatures.value = [event.feature];
-                selectedFeatures.value.clear();
-                selectedFeatures.value.push(event.feature);
-
-                calculateArea(event.feature);
-
-                updateBoundaries();
-
-                emit('draw-end', event.feature);
-            } catch (error) {
-                console.error('Error in drawend:', error);
-            }
-        };
-
-        const modifyend = (event) => {
-            try {
-                event.features.forEach(function (feature) {
-                    calculateArea(feature);
-                });
-
-                updateBoundaries();
-                emit('modify-end', event.features);
-            } catch (error) {
-                console.error('Error in modifyend:', error);
-            }
-        };
-
-        const calculateArea = (feature) => {
-            try {
-                const geometry = feature.getGeometry();
-                const areaInSquareMeters = Math.abs(geometry.getArea());
-                const areaInHectares = areaInSquareMeters / 10000;
-                calculatedArea.value = parseFloat(areaInHectares.toFixed(2));
-
-                emit('area-calculated', calculatedArea.value);
-            } catch (error) {
-                console.error('Error calculating field size:', error);
-                calculatedArea.value = null;
-            }
-        };
-
-        const updateBoundaries = () => {
-            try {
-                if (highlightedFeatures.value.length === 0) return;
-
-                const feature = highlightedFeatures.value[0];
-                const geometry = feature.getGeometry();
-
-                const mercatorCoords = geometry.getCoordinates()[0];
-
-                const wgs84Coords = mercatorCoords.map((coord) => toLonLat(coord));
-
-                emit('update:boundaries', wgs84Coords);
-            } catch (error) {
-                console.error('Error updating boundaries:', error);
-            }
-        };
-
-        const featureSelected = (event) => {
-            try {
-                modifyEnabled.value = false;
-
-                if (event.selected && event.selected.length > 0) {
-                    modifyEnabled.value = true;
-                }
-
-                selectedFeatures.value = event.target.getFeatures();
-            } catch (error) {
-                console.error('Error in feature selection:', error);
-            }
-        };
-
-        const resetMap = () => {
-            try {
-                drawEnabled.value = false;
-                modifyEnabled.value = false;
-                highlightedFeatures.value = [];
-                selectedFeatures.value.clear();
-                currentFeature.value = null;
-                calculatedArea.value = null;
-            } catch (error) {
-                console.error('Error resetting map:', error);
-            }
-        };
-
-        onMounted(() => {
-            if (props.boundaries && props.boundaries.length > 0) {
-                setTimeout(() => {
-                    loadFieldBoundaries(props.boundaries);
-                }, 300);
-            }
-
-            if (props.mode === 'create') {
-                setTimeout(() => {
-                    drawEnabled.value = true;
-                    emit('draw-start');
-                }, 500);
-            }
+    try {
+        const params = new URLSearchParams({ q: query, format: 'json', limit: '5' });
+        const response = await fetch(`https://nominatim.openstreetmap.org/search?${params}`, {
+            headers: { 'Accept-Language': navigator.language || 'en' },
         });
 
-        watch(
-            () => props.boundaries,
-            (newBoundaries) => {
-                try {
-                    if (newBoundaries && newBoundaries.length > 0 && view.value) {
-                        loadFieldBoundaries(newBoundaries);
-                    }
-                } catch (error) {
-                    console.error('Error in boundaries watcher:', error);
-                }
-            },
-            { deep: true }
-        );
+        if (!response.ok) {
+            throw new Error(`Geocoding request failed with status ${response.status}`);
+        }
 
-        watch(
-            () => props.mode,
-            (newMode) => {
-                try {
-                    if (newMode === 'edit') {
-                        modifyEnabled.value = true;
-                    } else if (newMode === 'view') {
-                        modifyEnabled.value = false;
-                        drawEnabled.value = false;
-                    } else if (newMode === 'create') {
-                        drawEnabled.value = true;
-                        emit('draw-start');
-                    }
-                } catch (error) {
-                    console.error('Error in mode watcher:', error);
-                }
-            }
-        );
+        const results = await response.json();
+        searchResults.value = results;
 
-        return {
-            center,
-            zoom,
-            projection,
-            rotation,
-            view,
-            drawEnabled,
-            modifyEnabled,
-            showLabels,
-            highlightedFeatures,
-            selectedFeatures,
-            calculatedArea,
-            toggleDraw,
-            resetMap,
-            drawstart,
-            drawend,
-            modifyend,
-            featureSelected,
-        };
-    },
+        if (results.length === 0) {
+            searchMessage.value = 'No places found.';
+        }
+    } catch {
+        searchMessage.value = 'Search is unavailable, try again later.';
+    } finally {
+        isSearching.value = false;
+    }
 };
+
+const goToResult = (result) => {
+    if (!view.value) return;
+
+    const [south, north, west, east] = result.boundingbox.map(Number);
+    const extent = transformExtent([west, south, east, north], 'EPSG:4326', projection.value);
+
+    view.value.fit(extent, {
+        maxZoom: 17,
+        duration: 1000,
+    });
+
+    searchQuery.value = result.display_name;
+    clearSearchResults();
+};
+
+const calculateArea = (feature) => {
+    const areaInSquareMeters = Math.abs(feature.getGeometry().getArea());
+    calculatedArea.value = parseFloat((areaInSquareMeters / 10000).toFixed(2));
+
+    emit('area-calculated', calculatedArea.value);
+};
+
+const updateBoundaries = () => {
+    if (highlightedFeatures.value.length === 0) return;
+
+    const mercatorCoords = highlightedFeatures.value[0].getGeometry().getCoordinates()[0];
+
+    emit(
+        'update:boundaries',
+        mercatorCoords.map((coord) => toLonLat(coord)),
+    );
+};
+
+const loadFieldBoundaries = (boundaries) => {
+    if (!boundaries || boundaries.length === 0) return;
+
+    const polygon = new Polygon([boundaries.map((coord) => fromLonLat(coord))]);
+    const feature = new Feature(polygon);
+
+    highlightedFeatures.value = [feature];
+
+    calculateArea(feature);
+
+    if (view.value) {
+        view.value.fit(polygon.getExtent(), {
+            padding: [50, 50, 50, 50],
+            duration: 1000,
+        });
+    }
+
+    if (props.mode === 'edit') {
+        modifyEnabled.value = true;
+        selectedFeatures.value.clear();
+        selectedFeatures.value.push(feature);
+    }
+};
+
+const resetMap = () => {
+    drawEnabled.value = false;
+    modifyEnabled.value = false;
+    highlightedFeatures.value = [];
+    selectedFeatures.value.clear();
+    calculatedArea.value = null;
+};
+
+const startDrawing = () => {
+    resetMap();
+    drawEnabled.value = true;
+    emit('draw-start');
+};
+
+const toggleDraw = async () => {
+    if (highlightedFeatures.value.length === 0) {
+        startDrawing();
+        return;
+    }
+
+    const result = await ConfirmModal.fire({
+        icon: 'warning',
+        title: 'Clear the current polygon?',
+        text: 'The boundary you have drawn will be removed.',
+        confirmButtonText: 'Yes, clear it',
+    });
+
+    if (result.isConfirmed) {
+        startDrawing();
+    }
+};
+
+const drawend = (event) => {
+    drawEnabled.value = false;
+    modifyEnabled.value = true;
+
+    highlightedFeatures.value = [event.feature];
+    selectedFeatures.value.clear();
+    selectedFeatures.value.push(event.feature);
+
+    calculateArea(event.feature);
+    updateBoundaries();
+
+    emit('draw-end', event.feature);
+};
+
+const modifyend = (event) => {
+    event.features.forEach((feature) => calculateArea(feature));
+
+    updateBoundaries();
+    emit('modify-end', event.features);
+};
+
+const featureSelected = (event) => {
+    modifyEnabled.value = event.selected?.length > 0;
+    selectedFeatures.value = event.target.getFeatures();
+};
+
+onMounted(() => {
+    if (props.boundaries && props.boundaries.length > 0) {
+        setTimeout(() => loadFieldBoundaries(props.boundaries), 300);
+    }
+
+    if (props.mode === 'create') {
+        setTimeout(() => {
+            drawEnabled.value = true;
+            emit('draw-start');
+        }, 500);
+    }
+});
+
+watch(
+    () => props.boundaries,
+    (newBoundaries) => {
+        if (newBoundaries && newBoundaries.length > 0 && view.value) {
+            loadFieldBoundaries(newBoundaries);
+        }
+    },
+    { deep: true },
+);
+
+watch(
+    () => props.mode,
+    (newMode) => {
+        if (newMode === 'edit') {
+            modifyEnabled.value = true;
+        } else if (newMode === 'view') {
+            modifyEnabled.value = false;
+            drawEnabled.value = false;
+        } else if (newMode === 'create') {
+            drawEnabled.value = true;
+            emit('draw-start');
+        }
+    },
+);
 </script>
 
 <style scoped>
@@ -342,6 +362,40 @@ export default {
     display: flex;
     align-items: center;
     justify-content: space-between;
+}
+
+.map-search {
+    position: absolute;
+    top: 10px;
+    left: 50px;
+    width: min(400px, calc(100% - 200px));
+    min-width: 220px;
+    z-index: 11;
+}
+
+.map-search-results {
+    margin-top: 4px;
+    max-height: 240px;
+    overflow-y: auto;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+}
+
+.map-search-result {
+    display: block;
+    width: 100%;
+    padding: 0.5rem 1rem;
+    border: 0;
+    background: none;
+    text-align: left;
+    font-size: 0.875rem;
+}
+
+.map-search-message {
+    margin-top: 4px;
+    padding: 6px 12px;
+    border-radius: 4px;
+    background-color: rgba(255, 255, 255, 0.9);
+    font-size: 0.875rem;
 }
 
 .area-info {

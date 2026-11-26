@@ -7,7 +7,7 @@
                 <div class="nk-block-head-content">
                     <h3 class="nk-block-title page-title">{{ report.title }}</h3>
                     <div class="nk-block-des text-soft">
-                        <Link href="/reports" class="btn btn-outline-primary btn-sm">
+                        <Link :href="route('reports.index')" class="btn btn-outline-primary btn-sm">
                             <em class="icon ni ni-arrow-left me-1"></em>
                             Back to Reports
                         </Link>
@@ -17,22 +17,25 @@
                     <div class="d-flex gap-2">
                         <button
                             v-if="report.status === 'draft'"
-                            @click="generateReport"
+                            type="button"
                             class="btn btn-outline-primary"
                             :disabled="isGenerating"
+                            @click="generateReport"
                         >
                             <div v-if="isGenerating" class="spinner-border spinner-border-sm me-1" role="status"></div>
                             <em v-else class="icon ni ni-loader me-1"></em>
                             <span>Generate</span>
                         </button>
-                        <button
+                        <a
                             v-if="report.status === 'generated'"
-                            @click="downloadReport"
+                            :href="route('reports.download', report.id)"
+                            target="_blank"
+                            rel="noopener"
                             class="btn btn-outline-success"
                         >
                             <em class="icon ni ni-download me-1"></em>
                             <span>Download PDF</span>
-                        </button>
+                        </a>
                         <Link
                             v-if="report.status === 'draft'"
                             :href="route('reports.edit', report.id)"
@@ -46,7 +49,6 @@
             </div>
         </div>
 
-        <!-- Report Info -->
         <div class="nk-block">
             <div class="row g-4">
                 <div class="col-md-8">
@@ -55,15 +57,15 @@
                             <div class="row g-3">
                                 <div class="col-sm-6">
                                     <div class="form-group">
-                                        <label class="form-label">Report Type</label>
+                                        <span class="form-label d-block">Report Type</span>
                                         <div class="form-control-plaintext">
-                                            <span class="badge badge-outline-info">{{ formatReportType(report.type) }}</span>
+                                            <span class="badge badge-dim bg-outline-info">{{ REPORT_TYPES[report.type] ?? formatLabel(report.type) }}</span>
                                         </div>
                                     </div>
                                 </div>
                                 <div class="col-sm-6">
                                     <div class="form-group">
-                                        <label class="form-label">Status</label>
+                                        <span class="form-label d-block">Status</span>
                                         <div class="form-control-plaintext">
                                             <ReportStatusBadge :status="report.status" />
                                         </div>
@@ -71,20 +73,20 @@
                                 </div>
                                 <div class="col-12" v-if="report.description">
                                     <div class="form-group">
-                                        <label class="form-label">Description</label>
+                                        <span class="form-label d-block">Description</span>
                                         <div class="form-control-plaintext">{{ report.description }}</div>
                                     </div>
                                 </div>
                                 <div class="col-sm-6">
                                     <div class="form-group">
-                                        <label class="form-label">Created</label>
-                                        <div class="form-control-plaintext">{{ formatDate(report.created_at) }}</div>
+                                        <span class="form-label d-block">Created</span>
+                                        <div class="form-control-plaintext">{{ formatDateTime(report.created_at) }}</div>
                                     </div>
                                 </div>
                                 <div class="col-sm-6" v-if="report.updated_at !== report.created_at">
                                     <div class="form-group">
-                                        <label class="form-label">Last Updated</label>
-                                        <div class="form-control-plaintext">{{ formatDate(report.updated_at) }}</div>
+                                        <span class="form-label d-block">Last Updated</span>
+                                        <div class="form-control-plaintext">{{ formatDateTime(report.updated_at) }}</div>
                                     </div>
                                 </div>
                             </div>
@@ -99,7 +101,7 @@
                             <ul class="list-group list-group-flush">
                                 <li v-for="(value, key) in report.parameters" :key="key" class="list-group-item px-0">
                                     <div class="d-flex justify-content-between">
-                                        <span class="text-soft">{{ formatParameterKey(key) }}:</span>
+                                        <span class="text-soft">{{ formatLabel(key) }}:</span>
                                         <span>{{ formatParameterValue(key, value) }}</span>
                                     </div>
                                 </li>
@@ -110,41 +112,17 @@
             </div>
         </div>
 
-        <!-- Report Content -->
         <div class="nk-block" v-if="report.status === 'generated' && report.content">
             <div class="card">
                 <div class="card-inner">
                     <h5 class="card-title">Report Content</h5>
 
-                    <!-- Weekly/Monthly Summary -->
-                    <div v-if="isWeeklySummary || isMonthlySummary">
-                        <WeeklySummaryContent :content="report.content" />
-                    </div>
-
-                    <!-- Problem Report -->
-                    <div v-else-if="isProblemReport">
-                        <ProblemReportContent :content="report.content" />
-                    </div>
-
-                    <!-- Crop Status Report -->
-                    <div v-else-if="isCropStatus">
-                        <CropStatusContent :content="report.content" />
-                    </div>
-
-                    <!-- Comparative Report -->
-                    <div v-else-if="isComparative">
-                        <ComparativeContent :content="report.content" />
-                    </div>
-
-                    <!-- Raw JSON for unknown types -->
-                    <div v-else>
-                        <pre class="bg-light p-3">{{ JSON.stringify(report.content, null, 2) }}</pre>
-                    </div>
+                    <component :is="contentComponent" v-if="contentComponent" :content="report.content" />
+                    <pre v-else class="bg-light p-3">{{ JSON.stringify(report.content, null, 2) }}</pre>
                 </div>
             </div>
         </div>
 
-        <!-- Draft Message -->
         <div class="nk-block" v-else-if="report.status === 'draft'">
             <div class="card">
                 <div class="card-inner text-center py-5">
@@ -154,7 +132,7 @@
                         </div>
                         <h5 class="nk-data-empty-title">Report Not Generated</h5>
                         <p class="nk-data-empty-note">This report is still in draft mode. Click "Generate" to create the content.</p>
-                        <button @click="generateReport" class="btn btn-primary" :disabled="isGenerating">
+                        <button type="button" class="btn btn-primary" :disabled="isGenerating" @click="generateReport">
                             <div v-if="isGenerating" class="spinner-border spinner-border-sm me-1" role="status"></div>
                             <em v-else class="icon ni ni-loader me-1"></em>
                             <span>Generate Report</span>
@@ -166,99 +144,67 @@
     </div>
 </template>
 
-<script>
-import { Head, Link } from '@inertiajs/vue3';
-import { ref, computed } from 'vue';
-import { router } from '@inertiajs/vue3';
+<script setup>
+import { computed, ref } from 'vue';
+import { Head, Link, router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import ReportStatusBadge from '@/Components/ReportStatusBadge.vue';
 import WeeklySummaryContent from '@/Components/Reports/WeeklySummaryContent.vue';
 import ProblemReportContent from '@/Components/Reports/ProblemReportContent.vue';
 import CropStatusContent from '@/Components/Reports/CropStatusContent.vue';
 import ComparativeContent from '@/Components/Reports/ComparativeContent.vue';
+import { formatDate, formatDateTime, formatLabel } from '@/format';
 
-export default {
-    layout: AppLayout,
-    components: {
-        Head,
-        Link,
-        ReportStatusBadge,
-        WeeklySummaryContent,
-        ProblemReportContent,
-        CropStatusContent,
-        ComparativeContent,
-    },
-    props: {
-        report: Object,
-    },
-    setup(props) {
-        const isGenerating = ref(false);
+defineOptions({ layout: AppLayout });
 
-        const isWeeklySummary = computed(() => props.report.type === 'weekly_summary');
-        const isMonthlySummary = computed(() => props.report.type === 'monthly_summary');
-        const isProblemReport = computed(() => props.report.type === 'problem_report');
-        const isCropStatus = computed(() => props.report.type === 'crop_status');
-        const isComparative = computed(() => props.report.type === 'comparative');
+const props = defineProps({
+    report: Object,
+});
 
-        const formatReportType = (type) => {
-            const types = {
-                'weekly_summary': 'Weekly Summary',
-                'monthly_summary': 'Monthly Summary',
-                'problem_report': 'Problem Report',
-                'crop_status': 'Crop Status',
-                'comparative': 'Comparative Analysis'
-            };
-            return types[type] || type;
-        };
+const REPORT_TYPES = {
+    weekly_summary: 'Weekly Summary',
+    monthly_summary: 'Monthly Summary',
+    problem_report: 'Problem Report',
+    crop_status: 'Crop Status',
+    comparative: 'Comparative Analysis',
+};
 
-        const formatDate = (dateString) => {
-            return new Date(dateString).toLocaleString();
-        };
+const CONTENT_COMPONENTS = {
+    weekly_summary: WeeklySummaryContent,
+    monthly_summary: WeeklySummaryContent,
+    problem_report: ProblemReportContent,
+    crop_status: CropStatusContent,
+    comparative: ComparativeContent,
+};
 
-        const formatParameterKey = (key) => {
-            return key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-        };
+const isGenerating = ref(false);
 
-        const formatParameterValue = (key, value) => {
-            if (key.includes('date')) {
-                return new Date(value).toLocaleDateString();
-            }
-            if (Array.isArray(value)) {
-                return value.length + ' items';
-            }
-            return value;
-        };
+const contentComponent = computed(() => CONTENT_COMPONENTS[props.report.type] ?? null);
 
-        const generateReport = () => {
-            isGenerating.value = true;
-            router.visit(route('reports.generate', props.report.id), {
-                method: 'post',
-                preserveScroll: true,
-                onFinish: () => {
-                    isGenerating.value = false;
-                },
-            });
-        };
+const formatParameterValue = (key, value) => {
+    if (key.includes('date')) {
+        return formatDate(value);
+    }
+    if (Array.isArray(value)) {
+        return `${value.length} items`;
+    }
+    return value;
+};
 
-        const downloadReport = () => {
-            window.open(route('reports.download', props.report.id), '_blank');
-        };
-
-        return {
-            isGenerating,
-            isWeeklySummary,
-            isMonthlySummary,
-            isProblemReport,
-            isCropStatus,
-            isComparative,
-            formatReportType,
-            formatDate,
-            formatParameterKey,
-            formatParameterValue,
-            generateReport,
-            downloadReport,
-        };
-    },
+const generateReport = () => {
+    router.post(
+        route('reports.generate', props.report.id),
+        {},
+        {
+            preserveScroll: true,
+            onStart: () => {
+                isGenerating.value = true;
+            },
+            onFinish: () => {
+                isGenerating.value = false;
+            },
+        },
+    );
 };
 </script>
 

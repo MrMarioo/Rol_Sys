@@ -1,6 +1,5 @@
 <template>
     <div class="problem-report">
-        <!-- Period Info -->
         <div class="row g-4 mb-4">
             <div class="col-md-8">
                 <div class="alert alert-light">
@@ -8,7 +7,7 @@
                     <p class="mb-0">
                         Period: {{ formatDate(content.period.start) }} - {{ formatDate(content.period.end) }}
                         <span v-if="content.severity_filter !== 'all'" class="ms-2">
-                            | Severity: <span class="badge badge-outline-primary">{{ content.severity_filter }}</span>
+                            | Severity: <span class="badge badge-dim bg-outline-primary">{{ formatLabel(content.severity_filter) }}</span>
                         </span>
                     </p>
                 </div>
@@ -26,7 +25,6 @@
             </div>
         </div>
 
-        <!-- No Problems Found -->
         <div v-if="content.total_problems === 0" class="card">
             <div class="card-inner text-center py-5">
                 <div class="nk-data-empty">
@@ -41,14 +39,13 @@
             </div>
         </div>
 
-        <!-- Problems by Field -->
         <div v-else class="row g-4">
             <div v-for="(fieldProblems, fieldId) in content.problems" :key="fieldId" class="col-12">
                 <div class="card">
                     <div class="card-inner">
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <h5 class="card-title mb-0">{{ fieldProblems.field_name }}</h5>
-                            <span class="badge badge-outline-warning">
+                            <span class="badge badge-dim bg-outline-warning">
                                 {{ fieldProblems.problem_count }} {{ fieldProblems.problem_count === 1 ? 'issue' : 'issues' }}
                             </span>
                         </div>
@@ -56,27 +53,27 @@
                         <div class="table-responsive">
                             <table class="table table-hover">
                                 <thead>
-                                <tr>
-                                    <th>Date</th>
-                                    <th>Type</th>
-                                    <th>Severity</th>
-                                    <th>Description</th>
-                                    <th>Location</th>
-                                </tr>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Type</th>
+                                        <th>Severity</th>
+                                        <th>Description</th>
+                                        <th>Location</th>
+                                    </tr>
                                 </thead>
                                 <tbody>
-                                <tr v-for="problem in fieldProblems.problems" :key="problem.date + problem.type">
+                                <tr v-for="(problem, index) in fieldProblems.problems" :key="index">
                                     <td>{{ formatDate(problem.date) }}</td>
                                     <td>
-                                            <span class="badge badge-outline-info">
-                                                {{ formatProblemType(problem.type) }}
-                                            </span>
+                                        <span class="badge badge-dim bg-outline-info">
+                                            {{ formatProblemType(problem.type) }}
+                                        </span>
                                     </td>
                                     <td>
-                                            <span :class="getSeverityBadgeClass(problem.severity)">
-                                                <em class="icon ni" :class="getSeverityIcon(problem.severity)"></em>
-                                                {{ problem.severity }}
-                                            </span>
+                                        <span :class="severityBadgeClass(problem.severity)">
+                                            <em class="icon ni" :class="severityIcon(problem.severity)"></em>
+                                            {{ formatLabel(problem.severity) }}
+                                        </span>
                                     </td>
                                     <td>{{ problem.description }}</td>
                                     <td>{{ problem.location }}</td>
@@ -89,7 +86,6 @@
             </div>
         </div>
 
-        <!-- Problem Summary by Type -->
         <div v-if="content.total_problems > 0" class="card mt-4">
             <div class="card-inner">
                 <h5 class="card-title">Problem Summary by Type</h5>
@@ -97,7 +93,7 @@
                     <div v-for="(count, type) in problemsByType" :key="type" class="col-md-4">
                         <div class="card border-light">
                             <div class="card-inner text-center">
-                                <em class="icon ni ni-alert-circle text-warning mb-2" style="font-size: 1.5rem;"></em>
+                                <em class="icon ni ni-alert-circle text-warning mb-2 summary-icon"></em>
                                 <h6>{{ formatProblemType(type) }}</h6>
                                 <p class="text-soft">{{ count }} {{ count === 1 ? 'occurrence' : 'occurrences' }}</p>
                             </div>
@@ -107,7 +103,6 @@
             </div>
         </div>
 
-        <!-- Recommendations -->
         <div v-if="content.total_problems > 0" class="card mt-4">
             <div class="card-inner">
                 <h5 class="card-title">Recommended Actions</h5>
@@ -136,91 +131,61 @@
     </div>
 </template>
 
-<script>
+<script setup>
 import { computed } from 'vue';
+import { formatDate, formatLabel } from '@/format';
 
-export default {
-    props: {
-        content: {
-            type: Object,
-            required: true
-        }
+const props = defineProps({
+    content: {
+        type: Object,
+        required: true,
     },
-    setup(props) {
-        const problemsByType = computed(() => {
-            const types = {};
-            Object.values(props.content.problems).forEach(fieldProblems => {
-                fieldProblems.problems.forEach(problem => {
-                    types[problem.type] = (types[problem.type] || 0) + 1;
-                });
-            });
-            return types;
-        });
+});
 
-        const hasHighSeverityProblems = computed(() => {
-            return Object.values(props.content.problems).some(fieldProblems =>
-                fieldProblems.problems.some(problem => problem.severity === 'high')
-            );
-        });
-
-        const hasNdviAnomalies = computed(() => {
-            return Object.values(props.content.problems).some(fieldProblems =>
-                fieldProblems.problems.some(problem => problem.type.includes('ndvi'))
-            );
-        });
-
-        const hasMoistureAnomalies = computed(() => {
-            return Object.values(props.content.problems).some(fieldProblems =>
-                fieldProblems.problems.some(problem => problem.type.includes('moisture'))
-            );
-        });
-
-        const formatDate = (dateString) => {
-            return new Date(dateString).toLocaleDateString();
-        };
-
-        const formatProblemType = (type) => {
-            return type.replace(/_/g, ' ')
-                .replace(/\b\w/g, l => l.toUpperCase())
-                .replace(' Anomaly', '');
-        };
-
-        const getSeverityBadgeClass = (severity) => {
-            const classes = {
-                'low': 'badge badge-outline-info',
-                'medium': 'badge badge-outline-warning',
-                'high': 'badge badge-outline-danger'
-            };
-            return classes[severity] || 'badge badge-outline-secondary';
-        };
-
-        const getSeverityIcon = (severity) => {
-            const icons = {
-                'low': 'ni-info',
-                'medium': 'ni-alert-triangle',
-                'high': 'ni-alert-circle'
-            };
-            return icons[severity] || 'ni-help';
-        };
-
-        return {
-            problemsByType,
-            hasHighSeverityProblems,
-            hasNdviAnomalies,
-            hasMoistureAnomalies,
-            formatDate,
-            formatProblemType,
-            getSeverityBadgeClass,
-            getSeverityIcon
-        };
-    }
+const SEVERITY_BADGES = {
+    low: 'badge badge-dim bg-outline-info',
+    medium: 'badge badge-dim bg-outline-warning',
+    high: 'badge badge-dim bg-outline-danger',
 };
+
+const SEVERITY_ICONS = {
+    low: 'ni-info',
+    medium: 'ni-alert',
+    high: 'ni-alert-circle',
+};
+
+const allProblems = computed(() =>
+    Object.values(props.content.problems ?? {}).flatMap((fieldProblems) => fieldProblems.problems),
+);
+
+const problemsByType = computed(() =>
+    allProblems.value.reduce((types, problem) => {
+        types[problem.type] = (types[problem.type] ?? 0) + 1;
+        return types;
+    }, {}),
+);
+
+const hasHighSeverityProblems = computed(() => allProblems.value.some((problem) => problem.severity === 'high'));
+
+const hasNdviAnomalies = computed(() => allProblems.value.some((problem) => problem.type.includes('ndvi')));
+
+const hasMoistureAnomalies = computed(() => allProblems.value.some((problem) => problem.type.includes('moisture')));
+
+const formatProblemType = (type) => formatLabel(type).replace(' Anomaly', '');
+
+const severityBadgeClass = (severity) => SEVERITY_BADGES[severity] ?? 'badge badge-dim bg-outline-secondary';
+
+const severityIcon = (severity) => SEVERITY_ICONS[severity] ?? 'ni-help';
 </script>
 
 <style scoped>
 .nk-iv-wg2-title .icon {
     font-size: 2rem;
     margin-bottom: 0.5rem;
+}
+
+.summary-icon {
+    font-size: 1.5rem;
 }
 
 .nk-data-empty-icon .icon {

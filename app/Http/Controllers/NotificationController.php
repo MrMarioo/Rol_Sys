@@ -30,7 +30,7 @@ final class NotificationController extends Controller
             ->allowedSorts(sorts: ['created_at'])
             ->defaultSort(sorts: ['-created_at'])
             ->paginate(
-                perPage: $request->integer(key: 'per_page', default: config('pagination.list')),
+                perPage: $this->perPage(request: $request),
             )
             ->withQueryString();
 

@@ -33,28 +33,33 @@ const submit = () => {
             <AuthenticationCardLogo />
         </template>
 
-        <div class="mb-4 text-sm text-gray-600">
-            This is a secure area of the application. Please confirm your password before continuing.
+        <div class="nk-block-head">
+            <div class="nk-block-head-content">
+                <h4 class="nk-block-title">Secure area</h4>
+                <div class="nk-block-des">
+                    <p>This is a secure area of the application. Please confirm your password before continuing.</p>
+                </div>
+            </div>
         </div>
 
         <form @submit.prevent="submit">
-            <div>
+            <div class="form-group">
                 <InputLabel for="password" value="Password" />
                 <TextInput
                     id="password"
                     ref="passwordInput"
                     v-model="form.password"
                     type="password"
-                    class="mt-1 block w-full"
+                    class="form-control-lg"
                     required
                     autocomplete="current-password"
                     autofocus
                 />
-                <InputError class="mt-2" :message="form.errors.password" />
+                <InputError class="mt-1" :message="form.errors.password" />
             </div>
 
-            <div class="flex justify-end mt-4">
-                <PrimaryButton class="ms-4" :class="{ 'opacity-25': form.processing }" :disabled="form.processing">
+            <div class="form-group mb-0">
+                <PrimaryButton class="btn-lg w-100 justify-content-center" :disabled="form.processing">
                     Confirm
                 </PrimaryButton>
             </div>

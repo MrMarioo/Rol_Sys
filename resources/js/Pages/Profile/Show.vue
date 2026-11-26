@@ -1,11 +1,14 @@
 <script setup>
+import { Head } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
-import DeleteUserForm from '@/Pages/Profile/Partials/DeleteUserForm.vue';
-import LogoutOtherBrowserSessionsForm from '@/Pages/Profile/Partials/LogoutOtherBrowserSessionsForm.vue';
+import DeleteUserForm from '@/Components/Profile/DeleteUserForm.vue';
+import LogoutOtherBrowserSessionsForm from '@/Components/Profile/LogoutOtherBrowserSessionsForm.vue';
 import SectionBorder from '@/Components/SectionBorder.vue';
-import TwoFactorAuthenticationForm from '@/Pages/Profile/Partials/TwoFactorAuthenticationForm.vue';
-import UpdatePasswordForm from '@/Pages/Profile/Partials/UpdatePasswordForm.vue';
-import UpdateProfileInformationForm from '@/Pages/Profile/Partials/UpdateProfileInformationForm.vue';
+import TwoFactorAuthenticationForm from '@/Components/Profile/TwoFactorAuthenticationForm.vue';
+import UpdatePasswordForm from '@/Components/Profile/UpdatePasswordForm.vue';
+import UpdateProfileInformationForm from '@/Components/Profile/UpdateProfileInformationForm.vue';
+
+defineOptions({ layout: AppLayout });
 
 defineProps({
     confirmsTwoFactorAuthentication: Boolean,
@@ -14,44 +17,44 @@ defineProps({
 </script>
 
 <template>
-    <AppLayout title="Profile">
-        <template #header>
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                Profile
-            </h2>
-        </template>
+    <div>
+        <Head title="Profile" />
 
-        <div>
-            <div class="max-w-7xl mx-auto py-10 sm:px-6 lg:px-8">
-                <div v-if="$page.props.jetstream.canUpdateProfileInformation">
-                    <UpdateProfileInformationForm :user="$page.props.auth.user" />
-
-                    <SectionBorder />
+        <div class="nk-block-head nk-block-head-sm">
+            <div class="nk-block-head-content">
+                <h3 class="nk-block-title page-title">Profile</h3>
+                <div class="nk-block-des text-soft">
+                    <p>Manage your account information and security settings.</p>
                 </div>
-
-                <div v-if="$page.props.jetstream.canUpdatePassword">
-                    <UpdatePasswordForm class="mt-10 sm:mt-0" />
-
-                    <SectionBorder />
-                </div>
-
-                <div v-if="$page.props.jetstream.canManageTwoFactorAuthentication">
-                    <TwoFactorAuthenticationForm
-                        :requires-confirmation="confirmsTwoFactorAuthentication"
-                        class="mt-10 sm:mt-0"
-                    />
-
-                    <SectionBorder />
-                </div>
-
-                <LogoutOtherBrowserSessionsForm :sessions="sessions" class="mt-10 sm:mt-0" />
-
-                <template v-if="$page.props.jetstream.hasAccountDeletionFeatures">
-                    <SectionBorder />
-
-                    <DeleteUserForm class="mt-10 sm:mt-0" />
-                </template>
             </div>
         </div>
-    </AppLayout>
+
+        <div class="nk-block">
+            <div v-if="$page.props.jetstream.canUpdateProfileInformation">
+                <UpdateProfileInformationForm :user="$page.props.auth.user" />
+
+                <SectionBorder />
+            </div>
+
+            <div v-if="$page.props.jetstream.canUpdatePassword">
+                <UpdatePasswordForm />
+
+                <SectionBorder />
+            </div>
+
+            <div v-if="$page.props.jetstream.canManageTwoFactorAuthentication">
+                <TwoFactorAuthenticationForm :requires-confirmation="confirmsTwoFactorAuthentication" />
+
+                <SectionBorder />
+            </div>
+
+            <LogoutOtherBrowserSessionsForm :sessions="sessions" />
+
+            <template v-if="$page.props.jetstream.hasAccountDeletionFeatures">
+                <SectionBorder />
+
+                <DeleteUserForm />
+            </template>
+        </div>
+    </div>
 </template>

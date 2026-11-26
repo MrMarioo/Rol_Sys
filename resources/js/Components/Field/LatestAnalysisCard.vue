@@ -45,7 +45,7 @@
 
 <script setup>
 import { Link } from '@inertiajs/vue3';
-import { formatNdvi, formatPercent, formatPercentRounded, statusClass } from '@/Components/Field/analyticsFormat';
+import { formatNdvi, formatPercent, formatPercentRounded, statusClass } from '@/format';
 
 defineProps({
     analysis: {

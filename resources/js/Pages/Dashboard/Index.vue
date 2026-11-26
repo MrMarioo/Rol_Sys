@@ -1,7 +1,11 @@
 <script setup>
-import { ref, onMounted } from 'vue';
-import { Head } from '@inertiajs/vue3';
+import { computed } from 'vue';
+import { Head, Link } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
+import FieldStatusBadge from '@/Components/FieldStatusBadge.vue';
+import { formatDataType, formatDate, formatLabel, formatLocation, isNumber } from '@/format';
+
+defineOptions({ layout: AppLayout });
 
 const props = defineProps({
     stats: Object,
@@ -11,18 +15,20 @@ const props = defineProps({
     analytics: Array,
 });
 
-defineOptions({
-    layout: AppLayout,
-});
+const activeFieldsCount = computed(() => (props.fields ?? []).filter((field) => field.status === 'active').length);
 
-const loading = ref(false);
+const fieldName = (fieldId) => props.fields?.find((field) => field.id === fieldId)?.name ?? 'Unknown field';
+
+const recommendationSummary = (recommendations) => {
+    const count = Array.isArray(recommendations) ? recommendations.length : 0;
+    return count === 1 ? '1 recommendation' : `${count} recommendations`;
+};
 </script>
 
 <template>
     <Head title="Dashboard" />
 
     <div>
-        <!-- Header Section -->
         <div class="container-fluid mb-4">
             <div class="row">
                 <div class="col-12">
@@ -31,19 +37,7 @@ const loading = ref(false);
             </div>
         </div>
 
-        <!-- Loading Indicator -->
-        <div v-if="loading" class="container-fluid mb-4">
-            <div class="card">
-                <div class="card-body d-flex justify-content-center py-5">
-                    <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">Loading...</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div v-else>
-            <!-- Stats Cards Section -->
+        <div>
             <div class="container-fluid mb-4">
                 <div class="row g-3">
                     <div class="col-md-3">
@@ -51,7 +45,7 @@ const loading = ref(false);
                             <div class="card-body">
                                 <h6 class="card-subtitle text-muted mb-2">Fields</h6>
                                 <h2 class="card-title mb-3">{{ stats?.totalFields || 0 }}</h2>
-                                <div class="small text-muted">Active Fields: {{ fields?.filter((f) => f.status === 'active').length || 0 }}</div>
+                                <div class="small text-muted">Active Fields: {{ activeFieldsCount }}</div>
                             </div>
                         </div>
                     </div>
@@ -88,7 +82,6 @@ const loading = ref(false);
                 </div>
             </div>
 
-            <!-- Quick Access Cards -->
             <div class="container-fluid mb-4">
                 <div class="row g-3">
                     <div class="col-md-6">
@@ -96,7 +89,7 @@ const loading = ref(false);
                             <div class="card-body d-flex flex-column">
                                 <div class="d-flex mb-3">
                                     <div class="flex-shrink-0">
-                                        <i class="bi bi-map fs-1 text-primary me-3"></i>
+                                        <em class="icon ni ni-map fs-1 text-primary me-3"></em>
                                     </div>
                                     <div>
                                         <h5 class="card-title">Field Management</h5>
@@ -104,10 +97,10 @@ const loading = ref(false);
                                     </div>
                                 </div>
                                 <div class="border-top mt-auto pt-3">
-                                    <a href="/fields" class="d-flex justify-content-between align-items-center text-decoration-none text-primary">
+                                    <Link :href="route('fields.index')" class="d-flex justify-content-between align-items-center text-decoration-none text-primary">
                                         <span>Manage Fields</span>
-                                        <i class="bi bi-chevron-right"></i>
-                                    </a>
+                                        <em class="icon ni ni-chevron-right"></em>
+                                    </Link>
                                 </div>
                             </div>
                         </div>
@@ -118,7 +111,7 @@ const loading = ref(false);
                             <div class="card-body d-flex flex-column">
                                 <div class="d-flex mb-3">
                                     <div class="flex-shrink-0">
-                                        <i class="bi bi-gear fs-1 text-primary me-3"></i>
+                                        <em class="icon ni ni-bar-chart fs-1 text-primary me-3"></em>
                                     </div>
                                     <div>
                                         <h5 class="card-title">Data Analysis</h5>
@@ -126,10 +119,10 @@ const loading = ref(false);
                                     </div>
                                 </div>
                                 <div class="border-top mt-auto pt-3">
-                                    <a href="/analytics" class="d-flex justify-content-between align-items-center text-decoration-none text-primary">
+                                    <Link :href="route('analytics.index')" class="d-flex justify-content-between align-items-center text-decoration-none text-primary">
                                         <span>View Analytics</span>
-                                        <i class="bi bi-chevron-right"></i>
-                                    </a>
+                                        <em class="icon ni ni-chevron-right"></em>
+                                    </Link>
                                 </div>
                             </div>
                         </div>
@@ -137,15 +130,14 @@ const loading = ref(false);
                 </div>
             </div>
 
-            <!-- Recent Analytics Section -->
             <div class="container-fluid mb-4">
                 <div class="card border">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <h6 class="mb-0">Recent Analytics</h6>
-                        <a href="/analytics" class="small text-decoration-none">
+                        <Link :href="route('analytics.index')" class="small text-decoration-none">
                             See All
-                            <i class="bi bi-chevron-right"></i>
-                        </a>
+                            <em class="icon ni ni-chevron-right"></em>
+                        </Link>
                     </div>
 
                     <div class="card-body text-center" v-if="!analytics || analytics.length === 0">
@@ -167,17 +159,17 @@ const loading = ref(false);
                             <tbody>
                                 <tr v-for="(analysis, index) in analytics.slice(0, 5)" :key="analysis.id">
                                     <td>{{ index + 1 }}</td>
-                                    <td>{{ fields.find((f) => f.id === analysis.field_id)?.name || 'Unknown field' }}</td>
-                                    <td>{{ analysis.analysis_type }}</td>
-                                    <td>{{ analysis.analysis_date }}</td>
+                                    <td>{{ fieldName(analysis.field_id) }}</td>
+                                    <td>{{ formatLabel(analysis.analysis_type) }}</td>
+                                    <td>{{ formatDate(analysis.analysis_date) }}</td>
                                     <td>
-                                        <span v-if="analysis.recommendations" class="text-truncate d-inline-block" style="max-width: 200px">
-                                            {{ analysis.recommendations }}
+                                        <span v-if="analysis.recommendations?.length">
+                                            {{ recommendationSummary(analysis.recommendations) }}
                                         </span>
                                         <span v-else class="text-muted">No recommendations</span>
                                     </td>
                                     <td>
-                                        <a :href="`/analytics/${analysis.id}`" class="btn btn-sm btn-outline-primary">View Details</a>
+                                        <Link :href="route('analytics.show', analysis.id)" class="btn btn-sm btn-outline-primary">View Details</Link>
                                     </td>
                                 </tr>
                             </tbody>
@@ -186,15 +178,14 @@ const loading = ref(false);
                 </div>
             </div>
 
-            <!-- Fields Section -->
             <div class="container-fluid mb-4">
                 <div class="card border">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <h6 class="mb-0">Your Fields</h6>
-                        <a href="/fields" class="small text-decoration-none">
+                        <Link :href="route('fields.index')" class="small text-decoration-none">
                             See All
-                            <i class="bi bi-chevron-right"></i>
-                        </a>
+                            <em class="icon ni ni-chevron-right"></em>
+                        </Link>
                     </div>
 
                     <div class="card-body text-center" v-if="!fields || fields.length === 0">
@@ -225,40 +216,37 @@ const loading = ref(false);
                                         <span v-else class="text-muted">No crop</span>
                                     </td>
                                     <td>
-                                        <span v-if="field.status === 'active'" class="badge bg-success">Active</span>
-                                        <span v-else-if="field.status === 'inactive'" class="badge bg-secondary">Inactive</span>
-                                        <span v-else-if="field.status === 'maintenance'" class="badge bg-warning text-dark">Maintenance</span>
-                                        <span v-else class="badge bg-secondary">{{ field.status }}</span>
+                                        <FieldStatusBadge :status="field.status" />
                                     </td>
                                     <td>
                                         <div class="dropdown">
                                             <button
                                                 class="btn btn-sm btn-outline-secondary dropdown-toggle"
                                                 type="button"
-                                                id="dropdownField"
+                                                :id="`field-actions-${field.id}`"
                                                 data-bs-toggle="dropdown"
                                                 aria-expanded="false"
                                             >
                                                 Actions
                                             </button>
-                                            <ul class="dropdown-menu" aria-labelledby="dropdownField">
+                                            <ul class="dropdown-menu" :aria-labelledby="`field-actions-${field.id}`">
                                                 <li>
-                                                    <a class="dropdown-item" :href="`/fields/${field.id}`">
-                                                        <i class="bi bi-eye me-2"></i>
+                                                    <Link class="dropdown-item" :href="route('fields.show', field.id)">
+                                                        <em class="icon ni ni-eye me-2"></em>
                                                         View Details
-                                                    </a>
+                                                    </Link>
                                                 </li>
                                                 <li>
-                                                    <a class="dropdown-item" :href="`/fields/${field.id}/data`">
-                                                        <i class="bi bi-cloud-download me-2"></i>
+                                                    <Link class="dropdown-item" :href="route('fields.data', field.id)">
+                                                        <em class="icon ni ni-download-cloud me-2"></em>
                                                         Get Data
-                                                    </a>
+                                                    </Link>
                                                 </li>
                                                 <li>
-                                                    <a class="dropdown-item" :href="`/fields/${field.id}/edit`">
-                                                        <i class="bi bi-pencil me-2"></i>
+                                                    <Link class="dropdown-item" :href="route('fields.edit', field.id)">
+                                                        <em class="icon ni ni-edit me-2"></em>
                                                         Edit
-                                                    </a>
+                                                    </Link>
                                                 </li>
                                             </ul>
                                         </div>
@@ -270,15 +258,14 @@ const loading = ref(false);
                 </div>
             </div>
 
-            <!-- Recent Field Data -->
             <div class="container-fluid mb-4">
                 <div class="card border">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <h6 class="mb-0">Recent Data Collections</h6>
-                        <a href="/field-data" class="small text-decoration-none">
+                        <Link :href="route('field-data.index')" class="small text-decoration-none">
                             See All
-                            <i class="bi bi-chevron-right"></i>
-                        </a>
+                            <em class="icon ni ni-chevron-right"></em>
+                        </Link>
                     </div>
 
                     <div class="card-body text-center" v-if="!fieldData || fieldData.length === 0">
@@ -300,17 +287,17 @@ const loading = ref(false);
                             <tbody>
                                 <tr v-for="(data, index) in fieldData.slice(0, 5)" :key="data.id">
                                     <td>{{ index + 1 }}</td>
-                                    <td>{{ fields.find((f) => f.id === data.field_id)?.name || 'Unknown field' }}</td>
-                                    <td>{{ data.data_type }}</td>
-                                    <td>{{ data.collection_date }}</td>
+                                    <td>{{ fieldName(data.field_id) }}</td>
+                                    <td>{{ formatDataType(data.data_type) }}</td>
+                                    <td>{{ formatDate(data.collection_date) }}</td>
                                     <td>
-                                        <span v-if="data.latitude && data.longitude">
-                                            {{ parseFloat(data.latitude).toFixed(5) }}, {{ parseFloat(data.longitude).toFixed(5) }}
+                                        <span v-if="isNumber(data.latitude) && isNumber(data.longitude)">
+                                            {{ formatLocation(data.latitude, data.longitude) }}
                                         </span>
                                         <span v-else class="text-muted">Not specified</span>
                                     </td>
                                     <td>
-                                        <a :href="`/field-data/${data.id}`" class="btn btn-sm btn-outline-primary">View Data</a>
+                                        <Link :href="route('field-data.show', data.id)" class="btn btn-sm btn-outline-primary">View Data</Link>
                                     </td>
                                 </tr>
                             </tbody>
@@ -319,12 +306,11 @@ const loading = ref(false);
                 </div>
             </div>
 
-            <!-- Support Section -->
             <div class="container-fluid">
                 <div class="card border">
                     <div class="card-body py-4 text-center">
                         <div class="mb-3">
-                            <i class="bi bi-headset fs-1 text-primary"></i>
+                            <em class="icon ni ni-headphone fs-1 text-primary"></em>
                         </div>
                         <h5>Need assistance with your precision agriculture system?</h5>
                         <p class="text-muted">

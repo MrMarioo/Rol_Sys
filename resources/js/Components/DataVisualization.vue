@@ -1,6 +1,5 @@
 <template>
     <div class="data-visualization">
-        <!-- Table view -->
         <div v-if="visualizationType === 'table'" class="table-responsive">
             <table class="table-bordered table">
                 <thead>
@@ -16,33 +15,24 @@
             </table>
         </div>
 
-        <!-- Line chart -->
         <div v-else-if="visualizationType === 'line-chart'" class="chart-container">
-            <v-chart class="chart" :option="lineChartOption" autoresize />
+            <VChart class="chart" :option="lineChartOption" autoresize />
         </div>
 
-        <!-- Bar chart -->
         <div v-else-if="visualizationType === 'bar-chart'" class="chart-container">
-            <v-chart class="chart" :option="barChartOption" autoresize />
+            <VChart class="chart" :option="barChartOption" autoresize />
         </div>
 
-        <!-- Pie chart -->
-        <div v-else-if="visualizationType === 'pie-chart'" class="chart-container">
-            <v-chart class="chart" :option="pieChartOption" autoresize />
-        </div>
-
-        <!-- Heatmap -->
         <div v-else-if="visualizationType === 'heatmap'" class="chart-container">
-            <v-chart class="chart" :option="heatmapOption" autoresize />
+            <VChart class="chart" :option="heatmapOption" autoresize />
         </div>
 
-        <!-- NOWE - Summary cards dla niektórych typów -->
         <div v-else-if="visualizationType === 'summary'" class="summary-cards">
             <div class="row g-3">
                 <div v-for="(item, key) in summaryData" :key="key" class="col-md-6 col-lg-4">
                     <div class="card text-center">
                         <div class="card-inner">
-                            <h6 class="subtitle">{{ formatHeader(key) }}</h6>
+                            <h6 class="subtitle">{{ formatLabel(key) }}</h6>
                             <span class="amount">{{ formatValue(item.value) }}</span>
                             <span v-if="item.unit" class="unit">{{ item.unit }}</span>
                         </div>
@@ -51,10 +41,9 @@
             </div>
         </div>
 
-        <!-- No suitable visualization -->
         <div v-else class="no-visualization">
             <div class="alert alert-info">
-                <h6>Raw Data ({{ props.type }})</h6>
+                <h6>Raw Data ({{ formatDataType(type) }})</h6>
                 <pre class="mt-3">{{ JSON.stringify(data, null, 2) }}</pre>
             </div>
         </div>
@@ -65,28 +54,27 @@
 import { computed } from 'vue';
 import { use } from 'echarts/core';
 import { CanvasRenderer } from 'echarts/renderers';
-import { LineChart, HeatmapChart, BarChart, PieChart } from 'echarts/charts';
+import { LineChart, HeatmapChart, BarChart } from 'echarts/charts';
 import {
     GridComponent,
     TooltipComponent,
     LegendComponent,
     MarkPointComponent,
-    VisualMapComponent
+    VisualMapComponent,
 } from 'echarts/components';
 import VChart from 'vue-echarts';
+import { formatDataType, formatDateTime, formatLabel, formatMoisture, isNumber } from '@/format';
 
-// Register echarts components
 use([
     CanvasRenderer,
     LineChart,
     HeatmapChart,
     BarChart,
-    PieChart,
     GridComponent,
     TooltipComponent,
     LegendComponent,
     MarkPointComponent,
-    VisualMapComponent
+    VisualMapComponent,
 ]);
 
 const props = defineProps({
@@ -101,10 +89,7 @@ const props = defineProps({
 });
 
 const visualizationType = computed(() => {
-    console.log('Data type:', props.type, 'Data:', props.data);
-
     switch (props.type) {
-        // Istniejące typy
         case 'soil_moisture':
         case 'temperature':
             return hasArrayData('moisture_values') || hasArrayData('temperature_values') ? 'line-chart' : 'table';
@@ -112,46 +97,38 @@ const visualizationType = computed(() => {
         case 'ndvi':
             return hasArrayData('ndvi_values') ? 'line-chart' : (hasHeatmapData.value ? 'heatmap' : 'table');
 
-        // NOWE typy z seedera
         case 'weather':
-            return 'summary'; // Pogoda jako karty z kluczowymi danymi
+            return 'summary';
 
         case 'soil_temperature':
             return hasArrayData('temperature_values') ? 'line-chart' : 'table';
 
         case 'fertilizer_application':
-            return 'summary'; // Nawożenie jako karty
+            return 'summary';
 
         case 'biomass_measurement':
-            return 'summary'; // Biomasa jako karty z kluczowymi wskaźnikami
+            return 'summary';
 
         case 'growth_stage':
-            return 'summary'; // Faza wzrostu jako informacyjne karty
+            return 'summary';
 
         case 'sunlight':
-            return hasArrayData('daily_values') ? 'bar-chart' : 'summary'; // Nasłonecznienie jako wykres słupkowy lub karty
+            return hasArrayData('daily_values') ? 'bar-chart' : 'summary';
 
         default:
             return 'table';
     }
 });
 
-// Helper functions
 const hasArrayData = (key) => {
     return props.data && Array.isArray(props.data[key]) && props.data[key].length > 0;
 };
-
-const hasTimeSeriesData = computed(() => {
-    if (!props.data || !Array.isArray(props.data.readings)) return false;
-    return props.data.readings.length > 0 && props.data.readings[0].timestamp !== undefined;
-});
 
 const hasHeatmapData = computed(() => {
     if (!props.data || !Array.isArray(props.data.grid)) return false;
     return props.data.grid.length > 0;
 });
 
-// NOWE - Summary data dla różnych typów
 const summaryData = computed(() => {
     if (!props.data) return {};
 
@@ -160,23 +137,23 @@ const summaryData = computed(() => {
             return {
                 temperature: {
                     value: props.data.temperature_avg || props.data.temperature || 'N/A',
-                    unit: '°C'
+                    unit: '°C',
                 },
                 humidity: {
                     value: props.data.humidity || 'N/A',
-                    unit: '%'
+                    unit: '%',
                 },
                 rainfall: {
                     value: props.data.rainfall || 0,
-                    unit: 'mm'
+                    unit: 'mm',
                 },
                 wind_speed: {
                     value: props.data.wind_speed || 'N/A',
-                    unit: 'km/h'
+                    unit: 'km/h',
                 },
                 pressure: {
                     value: props.data.pressure || 'N/A',
-                    unit: 'hPa'
+                    unit: 'hPa',
                 }
             };
 
@@ -184,19 +161,19 @@ const summaryData = computed(() => {
             return {
                 fertilizer_type: {
                     value: props.data.fertilizer_type || 'Unknown',
-                    unit: ''
+                    unit: '',
                 },
                 amount_per_hectare: {
                     value: props.data.amount_per_hectare || 0,
-                    unit: 'kg/ha'
+                    unit: 'kg/ha',
                 },
                 total_amount: {
                     value: props.data.total_amount || 0,
-                    unit: 'kg'
+                    unit: 'kg',
                 },
                 application_method: {
                     value: props.data.application_method || 'Unknown',
-                    unit: ''
+                    unit: '',
                 }
             };
 
@@ -204,19 +181,19 @@ const summaryData = computed(() => {
             return {
                 dry_biomass: {
                     value: props.data.dry_biomass_kg_per_ha || 0,
-                    unit: 'kg/ha'
+                    unit: 'kg/ha',
                 },
                 wet_biomass: {
                     value: props.data.wet_biomass_kg_per_ha || 0,
-                    unit: 'kg/ha'
+                    unit: 'kg/ha',
                 },
                 plant_height: {
                     value: props.data.plant_height_cm || 0,
-                    unit: 'cm'
+                    unit: 'cm',
                 },
                 plant_density: {
                     value: props.data.plant_density_per_m2 || 0,
-                    unit: 'plants/m²'
+                    unit: 'plants/m²',
                 }
             };
 
@@ -224,19 +201,19 @@ const summaryData = computed(() => {
             return {
                 growth_stage: {
                     value: props.data.growth_stage || 'Unknown',
-                    unit: ''
+                    unit: '',
                 },
                 bbch_code: {
                     value: props.data.bbch_code || 'N/A',
-                    unit: ''
+                    unit: '',
                 },
                 days_since_planting: {
                     value: props.data.days_since_planting || 0,
-                    unit: 'days'
+                    unit: 'days',
                 },
                 estimated_harvest_days: {
                     value: props.data.estimated_harvest_days || 'N/A',
-                    unit: 'days'
+                    unit: 'days',
                 }
             };
 
@@ -244,19 +221,19 @@ const summaryData = computed(() => {
             return {
                 sunshine_hours: {
                     value: props.data.sunshine_hours || 0,
-                    unit: 'hours'
+                    unit: 'hours',
                 },
                 solar_radiation: {
                     value: props.data.solar_radiation_mj_m2 || 0,
-                    unit: 'MJ/m²'
+                    unit: 'MJ/m²',
                 },
                 uv_index: {
                     value: props.data.uv_index || 0,
-                    unit: ''
+                    unit: '',
                 },
                 cloud_cover: {
                     value: props.data.cloud_cover_percent || 0,
-                    unit: '%'
+                    unit: '%',
                 }
             };
 
@@ -265,33 +242,30 @@ const summaryData = computed(() => {
     }
 });
 
-// Table data
 const tableData = computed(() => {
     if (!props.data) return [];
 
-    // Dla typów z wartościami array, pokaż te wartości
     if (props.type === 'soil_moisture' && props.data.moisture_values) {
         return props.data.moisture_values.map((value, index) => ({
             index: index + 1,
-            moisture_value: value
+            moisture: formatMoisture(value),
         }));
     }
 
     if (props.type === 'ndvi' && props.data.ndvi_values) {
         return props.data.ndvi_values.map((value, index) => ({
             index: index + 1,
-            ndvi_value: value
+            ndvi_value: value,
         }));
     }
 
     if (props.type === 'soil_temperature' && props.data.temperature_values) {
         return props.data.temperature_values.map((value, index) => ({
             index: index + 1,
-            temperature: value
+            temperature: value,
         }));
     }
 
-    // Dla innych typów
     if (Array.isArray(props.data)) {
         return props.data;
     } else if (Array.isArray(props.data.readings)) {
@@ -308,20 +282,11 @@ const tableHeaders = computed(() => {
 
     const headers = {};
     Object.keys(tableData.value[0]).forEach((key) => {
-        headers[key] = formatHeader(key);
+        headers[key] = formatLabel(key);
     });
 
     return headers;
 });
-
-// Utilities
-const formatHeader = (key) => {
-    return key
-        .replace(/_/g, ' ')
-        .split(' ')
-        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-        .join(' ');
-};
 
 const formatValue = (value) => {
     if (value === null || value === undefined) return '-';
@@ -330,23 +295,18 @@ const formatValue = (value) => {
     if (typeof value === 'number') {
         return Number.isInteger(value) ? value : value.toFixed(2);
     }
-    if (typeof value === 'string' && value.match(/^\d{4}-\d{2}-\d{2}T/)) {
-        try {
-            return new Date(value).toLocaleString('en-US');
-        } catch (e) {
-            return value;
-        }
+    if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T/.test(value)) {
+        return formatDateTime(value);
     }
     return value;
 };
 
-// ROZSZERZONE - Line chart data
 const lineChartData = computed(() => {
     if (props.type === 'soil_moisture' && props.data.moisture_values) {
         return {
             times: props.data.moisture_values.map((_, index) => `Point ${index + 1}`),
-            values: props.data.moisture_values,
-            valueKey: 'Moisture Level'
+            values: props.data.moisture_values.map((value) => (isNumber(value) ? Number((value * 100).toFixed(1)) : null)),
+            valueKey: 'Moisture (%)',
         };
     }
 
@@ -354,7 +314,7 @@ const lineChartData = computed(() => {
         return {
             times: props.data.ndvi_values.map((_, index) => `Point ${index + 1}`),
             values: props.data.ndvi_values,
-            valueKey: 'NDVI Value'
+            valueKey: 'NDVI Value',
         };
     }
 
@@ -362,11 +322,10 @@ const lineChartData = computed(() => {
         return {
             times: props.data.temperature_values.map((_, index) => `Point ${index + 1}`),
             values: props.data.temperature_values,
-            valueKey: 'Temperature (°C)'
+            valueKey: 'Temperature (°C)',
         };
     }
 
-    // Fallback dla starych formatów
     if (!props.data || !Array.isArray(props.data.readings)) return { times: [], values: [], valueKey: 'Value' };
 
     const readings = props.data.readings;
@@ -438,7 +397,6 @@ const lineChartOption = computed(() => {
     };
 });
 
-// NOWE - Bar chart dla sunlight
 const barChartOption = computed(() => {
     if (props.type === 'sunlight') {
         return {
@@ -466,14 +424,14 @@ const barChartOption = computed(() => {
                         props.data.sunshine_hours || 0,
                         props.data.solar_radiation_mj_m2 || 0,
                         props.data.uv_index || 0,
-                        props.data.cloud_cover_percent || 0
+                        props.data.cloud_cover_percent || 0,
                     ],
                     itemStyle: {
                         color: function(params) {
                             const colors = ['#FFC107', '#FF9800', '#FF5722', '#9E9E9E'];
                             return colors[params.dataIndex];
-                        }
-                    }
+                        },
+                    },
                 },
             ],
         };
@@ -482,48 +440,6 @@ const barChartOption = computed(() => {
     return {};
 });
 
-// NOWE - Pie chart (można dodać dla growth_stage distribution)
-const pieChartOption = computed(() => {
-    return {
-        tooltip: {
-            trigger: 'item'
-        },
-        legend: {
-            top: '5%',
-            left: 'center'
-        },
-        series: [
-            {
-                name: 'Distribution',
-                type: 'pie',
-                radius: ['40%', '70%'],
-                avoidLabelOverlap: false,
-                itemStyle: {
-                    borderRadius: 10,
-                    borderColor: '#fff',
-                    borderWidth: 2
-                },
-                label: {
-                    show: false,
-                    position: 'center'
-                },
-                emphasis: {
-                    label: {
-                        show: true,
-                        fontSize: '40',
-                        fontWeight: 'bold'
-                    }
-                },
-                labelLine: {
-                    show: false
-                },
-                data: []
-            }
-        ]
-    };
-});
-
-// Heatmap pozostaje bez zmian
 const heatmapData = computed(() => {
     if (!props.data || !Array.isArray(props.data.grid)) return { data: [] };
 

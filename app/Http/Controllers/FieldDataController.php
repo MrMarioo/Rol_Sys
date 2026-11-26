@@ -6,12 +6,10 @@ use App\Http\Requests\StoreFieldDataRequest;
 use App\Http\Requests\UpdateFieldDataRequest;
 use App\Http\Resources\FieldDataResource;
 use App\Http\Resources\FieldResource;
-use App\Models\Field;
 use App\Models\FieldData;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
 use Spatie\QueryBuilder\AllowedFilter;
@@ -26,8 +24,6 @@ final class FieldDataController extends Controller
     public function index(Request $request): Response
     {
         $fieldData = QueryBuilder::for(subject: FieldData::class)
-            ->with(relations: ['field'])
-            ->whereHas('field', fn ($q) => $q->where('user_id', Auth::id()))
             ->allowedFilters(filters: [
                 AllowedFilter::exact(name: 'field_id'),
                 AllowedFilter::exact(name: 'data_type'),
@@ -54,15 +50,17 @@ final class FieldDataController extends Controller
             ])
             ->allowedSorts(sorts: ['collection_date', 'created_at', 'data_type'])
             ->defaultSort(sorts: ['-collection_date'])
+            ->with(relations: ['field'])
+            ->ownedBy(user: $request->user())
             ->paginate(
-                perPage: $request->integer(key: 'per_page', default: config('pagination.list', 10)),
+                perPage: $this->perPage(request: $request),
             )
             ->withQueryString();
 
-        $fields = Field::where('user_id', Auth::id())->get();
+        $fields = $request->user()->fields()->orderBy('name')->get();
 
         $dataTypes = FieldData::query()
-            ->whereHas('field', fn ($q) => $q->where('user_id', Auth::id()))
+            ->ownedBy(user: $request->user())
             ->select('data_type')
             ->distinct()
             ->pluck('data_type');
@@ -84,9 +82,9 @@ final class FieldDataController extends Controller
         );
     }
 
-    public function create(): Response
+    public function create(Request $request): Response
     {
-        $fields = Field::where('user_id', Auth::id())->get();
+        $fields = $request->user()->fields()->orderBy('name')->get();
 
         return Inertia::render(
             component: 'FieldData/CreateForm',
@@ -99,7 +97,7 @@ final class FieldDataController extends Controller
     public function store(StoreFieldDataRequest $request): RedirectResponse
     {
         /** @var FieldData $fieldData */
-        $fieldData = $this->fieldData->create($request->decodedData());
+        $fieldData = $this->fieldData->create(attributes: $request->decodedData());
 
         return redirect()
             ->route(route: 'field-data.index')
@@ -121,11 +119,11 @@ final class FieldDataController extends Controller
         );
     }
 
-    public function edit(FieldData $fieldData): Response
+    public function edit(Request $request, FieldData $fieldData): Response
     {
         $this->authorize('update', $fieldData);
 
-        $fields = Field::where('user_id', Auth::id())->get();
+        $fields = $request->user()->fields()->orderBy('name')->get();
 
         return Inertia::render(
             component: 'FieldData/Edit',

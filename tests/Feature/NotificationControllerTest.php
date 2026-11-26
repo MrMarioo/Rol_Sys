@@ -115,8 +115,8 @@ class NotificationControllerTest extends TestCase
             'id' => Str::uuid()->toString(),
             'type' => 'App\\Notifications\\ReportGenerated',
             'data' => array_filter([
-                'title' => 'Raport wygenerowany',
-                'message' => 'Raport gotowy.',
+                'title' => 'Report generated',
+                'message' => 'Report is ready.',
                 'level' => 'success',
                 'url' => $url,
             ]),

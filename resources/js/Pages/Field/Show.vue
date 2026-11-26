@@ -1,11 +1,12 @@
 <template>
+    <Head :title="field.name" />
     <div>
         <div class="nk-block-head nk-block-head-sm">
             <div class="nk-block-between">
                 <div class="nk-block-head-content">
                     <h3 class="nk-block-title page-title">Field Details</h3>
                     <div class="nk-block-des text-soft">
-                        <Link href="/fields" class="btn btn-outline-primary btn-sm">
+                        <Link :href="route('fields.index')" class="btn btn-outline-primary btn-sm">
                             <em class="icon ni ni-arrow-left me-1"></em>
                             Back to Fields
                         </Link>
@@ -18,11 +19,18 @@
             </div>
         </div>
 
-        <ul class="nav nav-tabs mt-n3">
+        <ul class="nav nav-tabs mt-n3" role="tablist">
             <li v-for="tab in tabs" :key="tab.key" class="nav-item">
-                <a href="#" class="nav-link" :class="{ active: activeTab === tab.key }" @click.prevent="selectTab(tab.key)">
+                <button
+                    type="button"
+                    class="nav-link"
+                    role="tab"
+                    :class="{ active: activeTab === tab.key }"
+                    :aria-selected="activeTab === tab.key"
+                    @click="selectTab(tab.key)"
+                >
                     {{ tab.label }}
-                </a>
+                </button>
             </li>
         </ul>
 
@@ -81,21 +89,21 @@
                     <div class="card h-100">
                         <div class="card-body">
                             <div class="form-group">
-                                <label class="form-label">Field Name</label>
+                                <div class="form-label">Field Name</div>
                                 <div class="form-control-wrap">
                                     <div class="form-control-plaintext">{{ field.name }}</div>
                                 </div>
                             </div>
 
                             <div class="form-group mt-3">
-                                <label class="form-label">Location</label>
+                                <div class="form-label">Location</div>
                                 <div class="form-control-wrap">
                                     <div class="form-control-plaintext">{{ field.location || 'Not specified' }}</div>
                                 </div>
                             </div>
 
                             <div class="form-group mt-3">
-                                <label class="form-label">Size (hectares)</label>
+                                <div class="form-label">Size (hectares)</div>
                                 <div class="form-control-wrap">
                                     <div class="form-control-plaintext">{{ field.size }} ha</div>
                                 </div>
@@ -108,34 +116,32 @@
                     <div class="card h-100">
                         <div class="card-body">
                             <div class="form-group">
-                                <label class="form-label">Status</label>
+                                <div class="form-label">Status</div>
                                 <div class="form-control-wrap">
                                     <div class="form-control-plaintext">
-                                        <span :class="getStatusBadgeClass(field.status)">
-                                            {{ formatStatus(field.status) }}
-                                        </span>
+                                        <FieldStatusBadge :status="field.status" />
                                     </div>
                                 </div>
                             </div>
 
                             <div class="form-group mt-3">
-                                <label class="form-label">Description</label>
+                                <div class="form-label">Description</div>
                                 <div class="form-control-wrap">
                                     <div class="form-control-plaintext">{{ field.description || 'No description provided' }}</div>
                                 </div>
                             </div>
 
                             <div class="form-group mt-3" v-if="field.created_at">
-                                <label class="form-label">Created At</label>
+                                <div class="form-label">Created At</div>
                                 <div class="form-control-wrap">
-                                    <div class="form-control-plaintext">{{ formatDate(field.created_at) }}</div>
+                                    <div class="form-control-plaintext">{{ formatDateTime(field.created_at) }}</div>
                                 </div>
                             </div>
 
                             <div class="form-group mt-3" v-if="field.updated_at">
-                                <label class="form-label">Last Updated</label>
+                                <div class="form-label">Last Updated</div>
                                 <div class="form-control-wrap">
-                                    <div class="form-control-plaintext">{{ formatDate(field.updated_at) }}</div>
+                                    <div class="form-control-plaintext">{{ formatDateTime(field.updated_at) }}</div>
                                 </div>
                             </div>
                         </div>
@@ -227,10 +233,11 @@
     </div>
 </template>
 
-<script>
+<script setup>
 import { ref } from 'vue';
-import { Link, router } from '@inertiajs/vue3';
+import { Head, Link, router } from '@inertiajs/vue3';
 import FieldMap from '@/Components/FieldMap.vue';
+import FieldStatusBadge from '@/Components/FieldStatusBadge.vue';
 import FieldTrendChart from '@/Components/Field/FieldTrendChart.vue';
 import LatestReadingTiles from '@/Components/Field/LatestReadingTiles.vue';
 import RecentReadingsTable from '@/Components/Field/RecentReadingsTable.vue';
@@ -240,102 +247,61 @@ import LatestAnalysisCard from '@/Components/Field/LatestAnalysisCard.vue';
 import RecommendationList from '@/Components/Field/RecommendationList.vue';
 import RunAnalysisModal from '@/Components/Field/RunAnalysisModal.vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
+import { formatDateTime } from '@/format';
 
-export default {
-    layout: AppLayout,
-    components: {
-        AnalysisHistoryChart,
-        AnalysisHistoryTable,
-        LatestAnalysisCard,
-        FieldMap,
-        FieldTrendChart,
-        LatestReadingTiles,
-        Link,
-        RecentReadingsTable,
-        RecommendationList,
-        RunAnalysisModal,
+defineOptions({ layout: AppLayout });
+
+defineProps({
+    field: {
+        type: Object,
+        required: true,
     },
-    props: {
-        field: {
-            type: Object,
-            required: true,
-        },
-        latestReadings: {
-            type: Array,
-            default: () => [],
-        },
-        trendSeries: {
-            type: [Object, Array],
-            default: () => ({}),
-        },
-        recentReadings: {
-            type: Array,
-            default: () => [],
-        },
-        latestAnalysis: {
-            type: Object,
-            default: null,
-        },
-        topRecommendations: {
-            type: Array,
-            default: () => [],
-        },
-        analysisHistory: {
-            type: Array,
-            default: () => [],
-        },
-        sensitivities: {
-            type: Array,
-            default: () => [],
-        },
+    latestReadings: {
+        type: Array,
+        default: () => [],
     },
-    setup(props) {
-        const tabs = [
-            { key: 'overview', label: 'Overview' },
-            { key: 'data', label: 'Data' },
-            { key: 'analytics', label: 'Analytics' },
-        ];
-
-        const initialTab = new URLSearchParams(window.location.search).get('tab');
-        const activeTab = ref(tabs.some((tab) => tab.key === initialTab) ? initialTab : 'overview');
-
-        const showRunModal = ref(false);
-
-        const selectTab = (tab) => {
-            activeTab.value = tab;
-            const url = new URL(window.location.href);
-            url.searchParams.set('tab', tab);
-            router.replace({ url: url.toString(), preserveState: true, preserveScroll: true });
-        };
-
-        const formatStatus = (status) => {
-            if (status === 'active') return 'Active';
-            if (status === 'inactive') return 'Inactive';
-            return status.charAt(0).toUpperCase() + status.slice(1);
-        };
-
-        const getStatusBadgeClass = (status) => {
-            if (status === 'active') return 'badge badge-success';
-            if (status === 'inactive') return 'badge badge-warning';
-            return 'badge badge-primary';
-        };
-
-        const formatDate = (dateString) => {
-            if (!dateString) return 'N/A';
-            const date = new Date(dateString);
-            return date.toLocaleString();
-        };
-
-        return {
-            tabs,
-            activeTab,
-            showRunModal,
-            selectTab,
-            formatStatus,
-            getStatusBadgeClass,
-            formatDate,
-        };
+    trendSeries: {
+        type: [Object, Array],
+        default: () => ({}),
     },
+    recentReadings: {
+        type: Array,
+        default: () => [],
+    },
+    latestAnalysis: {
+        type: Object,
+        default: null,
+    },
+    topRecommendations: {
+        type: Array,
+        default: () => [],
+    },
+    analysisHistory: {
+        type: Array,
+        default: () => [],
+    },
+    sensitivities: {
+        type: Array,
+        default: () => [],
+    },
+});
+
+const tabs = [
+    { key: 'overview', label: 'Overview' },
+    { key: 'data', label: 'Data' },
+    { key: 'analytics', label: 'Analytics' },
+];
+
+const initialTab = new URLSearchParams(window.location.search).get('tab');
+const activeTab = ref(tabs.some((tab) => tab.key === initialTab) ? initialTab : 'overview');
+
+const showRunModal = ref(false);
+
+const selectTab = (tab) => {
+    activeTab.value = tab;
+    const url = new URL(window.location.href);
+    url.searchParams.set('tab', tab);
+    router.replace({ url: url.toString(), preserveState: true, preserveScroll: true });
 };
 </script>
 
@@ -348,32 +314,5 @@ export default {
     padding: 0.375rem 0;
     font-size: 0.875rem;
     line-height: 1.5;
-}
-
-.badge {
-    display: inline-block;
-    padding: 0.25em 0.5em;
-    font-size: 0.75em;
-    font-weight: 700;
-    line-height: 1;
-    text-align: center;
-    white-space: nowrap;
-    vertical-align: baseline;
-    border-radius: 0.25rem;
-}
-
-.badge-success {
-    color: #fff;
-    background-color: #1ee0ac;
-}
-
-.badge-warning {
-    color: #fff;
-    background-color: #f4bd0e;
-}
-
-.badge-primary {
-    color: #fff;
-    background-color: #6576ff;
 }
 </style>

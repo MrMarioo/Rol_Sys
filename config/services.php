@@ -38,6 +38,8 @@ return [
     'ai' => [
         'url' => env('AI_SERVICE_URL', 'http://ai-service:5000'),
         'timeout' => env('AI_SERVICE_TIMEOUT', 60),
+        'connect_timeout' => env('AI_SERVICE_CONNECT_TIMEOUT', 5),
+        'token' => env('AI_SERVICE_TOKEN'),
     ],
 
 ];

@@ -1,17 +1,10 @@
 import os
+from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parent
+
 
 class Config:
-    """Konfiguracja aplikacji."""
-
-    DB_HOST = os.environ.get('DB_HOST', 'db')
-    DB_USER = os.environ.get('DB_USER', 'root')
-    DB_PASSWORD = os.environ.get('DB_PASSWORD', 'l3tm31n')
-    DB_NAME = os.environ.get('DB_NAME', 'laravel')
-
-    MODEL_PATH = '/app/models'
-
-    TENSORFLOW_DEVICE = os.environ.get('TENSORFLOW_DEVICE', 'cpu')
-
-    API_URL = os.environ.get('AI_SERVICE_URL', 'http://localhost:5000')
-
-    DATA_PATH = '/app/data'
+    MODEL_PATH = Path(os.environ.get("AI_MODEL_PATH", BASE_DIR / "models" / "growth_model.pkl"))
+    API_TOKEN = os.environ.get("AI_SERVICE_TOKEN", "")
+    LOG_LEVEL = os.environ.get("AI_LOG_LEVEL", "INFO").upper()
